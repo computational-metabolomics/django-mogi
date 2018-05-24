@@ -1,0 +1,9 @@
+{% extends "gfiles/table_file_select.html" %}
+{% load static %}
+{% block sb_admin_title %}Upload ISA files to Galaxy data library {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small>Step 1</small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "galaxy_summary" %}"> Galaxy Summary</a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / Upload ISA files to Galaxy data library {% endblock sb_admin_breadcrumb_active %}
