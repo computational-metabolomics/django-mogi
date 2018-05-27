@@ -11,16 +11,24 @@ from misa.views import InvestigationListView
 from misa.tables import ISAFileSelectTable, ISAFileSelectTableWithCheckBox
 from misa.filter import ISAFileFilter
 
-from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable
+from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakGroupMetaTable
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
 from mogi.tasks import galaxy_isa_upload_datalib_task
 from metab.utils.save_lcms import save_lcms_data
 from metab.models import MFile, MetabInputData
+from metab.views import CPeakGroupMetaListView
+
+
 from mogi.models import HistoryDataMOGI
 
 from galaxy.utils.history_actions import get_history_data
 from galaxy.views import FilesToGalaxyDataLib, GenericFilesToGalaxyHistory, WorkflowListView, HistoryListView, HistoryDataCreateView
 
+
+
+########################################################################################################################
+# Galaxy ISA uploads and workflows
+########################################################################################################################
 class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
     '''
     '''
@@ -46,9 +54,6 @@ class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
         return render(request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
 
-
-
-
 class ISAWorkflowRunView(WorkflowRunView):
     '''
     Run a registered workflow
@@ -62,17 +67,9 @@ class ISAWorkflowRunView(WorkflowRunView):
     redirect_to = 'history_mogi'
 
 
-
-
 class ISAFileSelectToGalaxyDataLib(FilesToGalaxyDataLib):
     table_class = ISAFileSelectTableWithCheckBox
     filterset_class = ISAFileFilter
-
-
-
-
-
-
 
 
 class ISAFileSelectToGalaxyHist(GenericFilesToGalaxyHistory):
@@ -84,22 +81,9 @@ class ISAWorkflowListView(WorkflowListView):
     table_class = WorkflowTableISA
 
 
-
-
-def index(request):
-    return render(request, 'mogi/index.html')
-
-def about(request):
-    return render(request, 'mogi/about.html')
-
-def submitted(request):
-    return render(request, 'galaxy/submitted.html')
-
-def success(request):
-    return render(request, 'dma/success.html')
-
-
-
+########################################################################################################################
+# Galaxy History data upload to django-metab
+########################################################################################################################
 class HistoryDataMogiListView(LoginRequiredMixin, View):
 
 
@@ -135,3 +119,31 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
 
 
         return render(self.request, 'dma/submitted.html')
+
+
+########################################################################################################################
+# django-metab Peak and annotation summary
+########################################################################################################################
+class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
+    table_class = CPeakGroupMetaTable
+
+
+########################################################################################################################
+# Generic
+########################################################################################################################
+def index(request):
+    return render(request, 'mogi/index.html')
+
+def about(request):
+    return render(request, 'mogi/about.html')
+
+def submitted(request):
+    return render(request, 'galaxy/submitted.html')
+
+def success(request):
+    return render(request, 'dma/success.html')
+
+
+
+
+
