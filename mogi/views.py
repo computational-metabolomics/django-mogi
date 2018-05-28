@@ -6,24 +6,28 @@ from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View
 
-from galaxy.views import WorkflowRunView, TableFileSelectMixin
+from misa.models import Investigation
 from misa.views import InvestigationListView
 from misa.tables import ISAFileSelectTable, ISAFileSelectTableWithCheckBox
 from misa.filter import ISAFileFilter
 
-from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakGroupMetaTable
+from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakMetaMogiTable, CAnnotationMogiTable
+from mogi.models import CAnnotationMOGI
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
 from mogi.tasks import galaxy_isa_upload_datalib_task
-from metab.utils.save_lcms import save_lcms_data
-from metab.models import MFile, MetabInputData
-from metab.views import CPeakGroupMetaListView
+from metab.utils.save_lcms import LcmsDataTransfer
+from metab.models import MFile, MetabInputData, CAnnotation
+from metab.views import CPeakGroupMetaListView, CAnnotationsListAllView
+
+
+from galaxy.models import Workflow
+from galaxy.utils.history_actions import get_history_data
+from galaxy.views import FilesToGalaxyDataLib, GenericFilesToGalaxyHistory, WorkflowListView, HistoryListView, HistoryDataCreateView
+from galaxy.views import WorkflowRunView, TableFileSelectMixin
+
 
 
 from mogi.models import HistoryDataMOGI
-
-from galaxy.utils.history_actions import get_history_data
-from galaxy.views import FilesToGalaxyDataLib, GenericFilesToGalaxyHistory, WorkflowListView, HistoryListView, HistoryDataCreateView
-
 
 
 ########################################################################################################################
@@ -113,9 +117,11 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
         # first get all the mfiles associated with the investigation
 
         mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=obj.investigation.pk)
+        mfiles_ids = [m.id for m in mfiles]
         md = MetabInputData(gfile_id=obj.genericfile_ptr_id)
         md.save()
-        save_lcms_data(md.id, mfiles)
+        lcms_data_transfer = LcmsDataTransfer(md.id, mfiles_ids)
+        lcms_data_transfer.transfer()
 
 
         return render(self.request, 'dma/submitted.html')
@@ -125,14 +131,28 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
 # django-metab Peak and annotation summary
 ########################################################################################################################
 class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
-    table_class = CPeakGroupMetaTable
+    table_class = CPeakMetaMogiTable
+
+class CAnnotationListAllMogiView(CAnnotationsListAllView):
+    table_class = CAnnotationMogiTable
+    model = CAnnotationMOGI
+
 
 
 ########################################################################################################################
 # Generic
 ########################################################################################################################
 def index(request):
-    return render(request, 'mogi/index.html')
+    summary_d = {}
+    summary_d['dataset_nm'] = len(MetabInputData.objects.all())
+
+    summary_d['isa_nm'] = len(Investigation.objects.all())
+
+    summary_d['workflow_nm'] = len(Workflow.objects.all())
+
+    summary_d['ann_nm'] = len(CAnnotation.objects.values('compound').distinct())
+
+    return render(request, 'mogi/index.html', summary_d)
 
 def about(request):
     return render(request, 'mogi/about.html')

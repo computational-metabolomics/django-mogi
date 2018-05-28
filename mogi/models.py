@@ -5,7 +5,7 @@ from django.db import models
 from galaxy.models import GalaxyInstanceTracking, FilesToGalaxyDataLibraryParam, HistoryData
 from misa.models import Investigation, Assay
 
-from metab.models import CAnnotation, Compound
+from metab.models import CAnnotation, Compound, CPeakGroupMeta
 
 
 ################################################################################################################
@@ -25,9 +25,14 @@ class HistoryDataMOGI(HistoryData):
     investigation = models.ForeignKey(Investigation, on_delete=models.CASCADE, null=True, blank=True)
 
 
+class CPeakGroupMetaMOGI(CPeakGroupMeta):
+    historydatamogi = models.ForeignKey(HistoryDataMOGI, on_delete=models.CASCADE)
+    assay = models.ManyToManyField(Assay)
+
+
 class CAnnotationMOGI(CAnnotation):
     galaxy_history = models.ForeignKey(GalaxyInstanceTracking, on_delete=models.CASCADE)
-    assay = models.ManyToManyField(Assay, on_delete=models.CASCADE)
+    assay = models.ManyToManyField(Assay)
 
 
 class AnnotationSummary(models.Model):

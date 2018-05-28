@@ -40,5 +40,6 @@ urlpatterns = [
     # Peak and annotation summary
     ##############################################
     url(r'^cpeakgroupmeta_summary_mogi/$', views.CPeakGroupMetaListMogiView.as_view(), name='cpeakgroupmeta_summary_mogi'),
+    url(r'^canns_all_mogi/$', views.CPeakGroupMetaListMogiView.as_view(), name='canns_all_mogi'),
 
 ]
