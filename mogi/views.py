@@ -14,7 +14,7 @@ from misa.filter import ISAFileFilter
 from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakMetaMogiTable, CAnnotationMogiTable
 from mogi.models import CAnnotationMOGI
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
-from mogi.tasks import galaxy_isa_upload_datalib_task
+from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms
 from metab.utils.save_lcms import LcmsDataTransfer
 from metab.models import MFile, MetabInputData, CAnnotation
 from metab.views import CPeakGroupMetaListView, CAnnotationsListAllView
@@ -94,7 +94,8 @@ class HistoryDataMogiListView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         data = get_history_data(self.kwargs['pk'], request.user, name_filter=['alldata.sqlite',
                                                                               'frag4feature_sqlite',
-                                                                              'spectral_matching_sqlite'])
+                                                                              'spectral_matching_sqlite',
+                                                                              'csi_metfrag_sm_probmetab_NXftrFG_bgcPAmR_1Qbf6c4_lksySnx.sqlite'])
 
         table = HistoryMogiDataTable(data)
 
@@ -116,15 +117,9 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
         obj = self.save_form(form)
         # first get all the mfiles associated with the investigation
 
-        mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=obj.investigation.pk)
-        mfiles_ids = [m.id for m in mfiles]
-        md = MetabInputData(gfile_id=obj.genericfile_ptr_id)
-        md.save()
-        lcms_data_transfer = LcmsDataTransfer(md.id, mfiles_ids)
-        lcms_data_transfer.transfer()
-
-
-        return render(self.request, 'dma/submitted.html')
+        result = save_lcms.delay(obj.genericfile_ptr_id, obj.investigation.pk)
+        self.request.session['result'] = result.id
+        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
 
 ########################################################################################################################
