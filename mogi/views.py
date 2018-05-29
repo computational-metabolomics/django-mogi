@@ -14,11 +14,11 @@ from misa.filter import ISAFileFilter
 from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakMetaMogiTable, CAnnotationMogiTable
 from mogi.models import CAnnotationMOGI
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
-from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms
+from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi
 from metab.utils.save_lcms import LcmsDataTransfer
 from metab.models import MFile, MetabInputData, CAnnotation
 from metab.views import CPeakGroupMetaListView, CAnnotationsListAllView
-
+from django.db.models import Q
 
 from galaxy.models import Workflow
 from galaxy.utils.history_actions import get_history_data
@@ -117,7 +117,7 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
         obj = self.save_form(form)
         # first get all the mfiles associated with the investigation
 
-        result = save_lcms.delay(obj.genericfile_ptr_id, obj.investigation.pk)
+        result = save_lcms_mogi.delay(obj.pk)
         self.request.session['result'] = result.id
         return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
@@ -145,7 +145,14 @@ def index(request):
 
     summary_d['workflow_nm'] = len(Workflow.objects.all())
 
-    summary_d['ann_nm'] = len(CAnnotation.objects.values('compound').distinct())
+
+    summary_d['ann_nm'] = len(CAnnotation.objects.filter(Q(spectral_matching_average_score__gt=0.6) |
+                                                         Q(ms1_average_score__gt=0.0) |
+                                                         Q(metfrag_average_score__gt=0.0) |
+                                                         Q(sirius_csifingerid_average_score__gt=0.0) |
+                                                         Q(mzcloud_average_score__gt=0.6)
+                                                         ).values('cpeakgroup').distinct())
+
 
     return render(request, 'mogi/index.html', summary_d)
 

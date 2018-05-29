@@ -5,7 +5,7 @@ from misa.models import Investigation
 from galaxy.models import Workflow, History
 from galaxy.tables import HistoryTable, HistoryDataTable
 from metab.tables import CAnnotationTable, CPeakGroupMetaTable
-from mogi.models import CAnnotationMOGI
+from mogi.models import CAnnotationMOGI, CPeakGroupMetaMOGI
 from django_tables2_column_shifter.tables import ColumnShiftTable
 
 # class InvestigationTableUpload(InvestigationTable):
@@ -85,12 +85,13 @@ class HistoryMogiDataTable(HistoryDataTable):
 
 
 class CPeakMetaMogiTable(CPeakGroupMetaTable):
-    galaxy_history = tables.Column(accessor='metabinputdata.historymogi.name', verbose_name='Galaxy history details')
+    galaxy_history = tables.Column(accessor='cpeakgroupmeta.metabinputdata.historymogi.name', verbose_name='Galaxy history details')
 
     investigation = tables.Column(accessor='metabinputdata.historymogi.investigation',
                                    verbose_name='Galaxy history details')
 
     class Meta:
+        model = CPeakGroupMetaMOGI
         attrs = {'class': 'paleblue'}
         template = 'django_tables2/bootstrap.html'
 

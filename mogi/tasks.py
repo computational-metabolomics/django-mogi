@@ -1,10 +1,12 @@
 # Create your tasks here
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
+
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 from galaxy.models import FilesToGalaxyDataLibraryParam
 from metab.models import MFile, MetabInputData
-from metab.utils.save_lcms import LcmsDataTransfer
+from mogi.utils.save_lcms import LcmsDataTransferMOGI
+from mogi.models import HistoryDataMOGI
 
 @shared_task(bind=True)
 def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
@@ -20,11 +22,14 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
 
 
 @shared_task(bind=True)
-def save_lcms(self, invest_id, gfile_id):
-    mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=invest_id)
+def save_lcms_mogi(self, hdm_id):
+    hdm = HistoryDataMOGI.objects.get(pk=hdm_id)
+
+    mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=hdm.investigation.pk)
     mfiles_ids = [m.id for m in mfiles]
-    md = MetabInputData(gfile_id=gfile_id)
+    md = MetabInputData(gfile_id=hdm.genericfile_ptr_id)
     md.save()
-    lcms_data_transfer = LcmsDataTransfer(md.id, mfiles_ids)
+    lcms_data_transfer = LcmsDataTransferMOGI(md.id, mfiles_ids)
+    lcms_data_transfer.historydatamogi = hdm
     lcms_data_transfer.transfer(celery_obj=self)
 
