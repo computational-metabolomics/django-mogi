@@ -1,5 +1,5 @@
 from metab.utils.save_lcms import LcmsDataTransfer
-from mogi.models import CPeakGroupMetaMOGI, HistoryDataMOGI
+from mogi.models import CPeakGroupMetaMOGI
 from misa.models import Assay
 
 class LcmsDataTransferMOGI(LcmsDataTransfer):
@@ -7,20 +7,11 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
     historydatamogi = ''
 
     def set_cpeakgroupmeta(self):
-        CPeakGroupMeta = self.cpeakgroupmeta_class
-
-        # mfile_values = self.mfiles.values('run__assayrun__assaydetail__assay',
-        #               'run__assayrun__assaydetail__assay__study',
-        #               'run__assayrun__assaydetail__assay__study__investigation')
+        print 'CPeakGroupMetaMOGI'
         mfile_values = self.mfiles.values('run__assayrun__assaydetail__assay_id')
 
-
-        cpgm = CPeakGroupMeta(metabinputdata=self.md, historydatamogi=self.historydatamogi)
+        cpgm = CPeakGroupMetaMOGI(metabinputdata=self.md, historydatamogi=self.historydatamogi)
         cpgm.save()
         for m in mfile_values:
             cpgm.assay.add(Assay.objects.get(id=m['run__assayrun__assaydetail__assay_id']))
-
-
-
-
         return cpgm

@@ -4,15 +4,18 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import View
+from django.views.generic import View, ListView
+
+from django_tables2.export.views import ExportMixin
+from django_tables2.views import SingleTableMixin
 
 from misa.models import Investigation
 from misa.views import InvestigationListView
 from misa.tables import ISAFileSelectTable, ISAFileSelectTableWithCheckBox
 from misa.filter import ISAFileFilter
 
-from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakMetaMogiTable, CAnnotationMogiTable
-from mogi.models import CAnnotationMOGI
+from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakGroupMetaMogiTable, CAnnotationMogiTable, IncomingGalaxyDataTable
+from mogi.models import CAnnotationMOGI, CPeakGroupMetaMOGI, IncomingGalaxyData
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
 from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi
 from metab.utils.save_lcms import LcmsDataTransfer
@@ -20,14 +23,36 @@ from metab.models import MFile, MetabInputData, CAnnotation
 from metab.views import CPeakGroupMetaListView, CAnnotationsListAllView
 from django.db.models import Q
 
-from galaxy.models import Workflow
-from galaxy.utils.history_actions import get_history_data
+from galaxy.models import Workflow, History
+from galaxy.utils.history_actions import get_history_data,init_history_data_save_form, history_data_save_form
 from galaxy.views import FilesToGalaxyDataLib, GenericFilesToGalaxyHistory, WorkflowListView, HistoryListView, HistoryDataCreateView
 from galaxy.views import WorkflowRunView, TableFileSelectMixin
-
-
-
+from galaxy.utils.history_actions import get_history_status
 from mogi.models import HistoryDataMOGI
+
+
+from rest_framework import viewsets
+from mogi.serializers import IncomingGalaxyDataSerializer
+
+
+########################################################################################################################
+# REST
+########################################################################################################################
+class IncomingGalaxyDataViewSet(viewsets.ModelViewSet):
+    """
+    """
+    queryset = IncomingGalaxyData.objects.all()
+    serializer_class =  IncomingGalaxyDataSerializer
+
+
+class IncomingGalaxyDataListView(LoginRequiredMixin, SingleTableMixin, ListView):
+    '''
+    '''
+    table_class = IncomingGalaxyDataTable
+    model = IncomingGalaxyData
+    template_name = 'mogi/incoming_galaxy_data.html'
+
+
 
 
 ########################################################################################################################
@@ -92,10 +117,7 @@ class HistoryDataMogiListView(LoginRequiredMixin, View):
 
 
     def get(self, request, *args, **kwargs):
-        data = get_history_data(self.kwargs['pk'], request.user, name_filter=['alldata.sqlite',
-                                                                              'frag4feature_sqlite',
-                                                                              'spectral_matching_sqlite',
-                                                                              'csi_metfrag_sm_probmetab_NXftrFG_bgcPAmR_1Qbf6c4_lksySnx.sqlite'])
+        data = get_history_data(self.kwargs['pk'], request.user, data_type=['sqlite'])
 
         table = HistoryMogiDataTable(data)
 
@@ -122,15 +144,57 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
         return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
 
+class HistoryDataMogiFromRestCreateView(HistoryDataMogiCreateView):
+
+    def get_initial(self):
+        user = self.request.user
+        get_history_status(user)
+
+        galaxy_name = self.kwargs.get('galaxy_name')
+        galaxy_data_id = self.kwargs.get('galaxy_data_id')
+        galaxy_history_id = self.kwargs.get('galaxy_history_id')
+
+        internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
+
+        if internal_h:
+            history_d = init_history_data_save_form(user=user, history_internal_id=internal_h[0].id, galaxy_dataset_id=galaxy_data_id)
+
+            return {'history': internal_h[0].id,
+                    'name': history_d['name']}
+        else:
+            return {'history': 'NO DATA AVAILABLE (PLEASE CHECK CONNECTION)',
+                    'name': 'NO DATA AVAILABLE (PLEASE CHECK CONNECTION)'}
+
+    def save_form(self, form):
+        history_data_obj = form.save(commit=False)
+        history_data_obj.user = self.request.user
+
+        galaxy_name = self.kwargs.get('galaxy_name')
+        galaxy_data_id = self.kwargs.get('galaxy_data_id')
+        galaxy_history_id = self.kwargs.get('galaxy_history_id')
+
+        internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
+
+        return history_data_save_form(self.request.user, internal_h[0].id, galaxy_data_id, history_data_obj)
+
+
+
+
+
 ########################################################################################################################
 # django-metab Peak and annotation summary
 ########################################################################################################################
 class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
-    table_class = CPeakMetaMogiTable
+    table_class =CPeakGroupMetaMogiTable
+    model = CPeakGroupMetaMOGI
 
-class CAnnotationListAllMogiView(CAnnotationsListAllView):
+class CAnnotationListAllMogiView(ExportMixin, CAnnotationsListAllView):
     table_class = CAnnotationMogiTable
     model = CAnnotationMOGI
+    export_name = 'all_annotations_chromatographic_peaks'
+
+    def get_queryset(self):
+        return self.model.objects.all().order_by('-cannotation__weighted_score')
 
 
 

@@ -4,9 +4,9 @@ from celery import shared_task
 
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 from galaxy.models import FilesToGalaxyDataLibraryParam
-from metab.models import MFile, MetabInputData
+from metab.models import MFile, MetabInputData, CAnnotation
 from mogi.utils.save_lcms import LcmsDataTransferMOGI
-from mogi.models import HistoryDataMOGI
+from mogi.models import HistoryDataMOGI, CAnnotationMOGI
 
 @shared_task(bind=True)
 def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
@@ -32,4 +32,10 @@ def save_lcms_mogi(self, hdm_id):
     lcms_data_transfer = LcmsDataTransferMOGI(md.id, mfiles_ids)
     lcms_data_transfer.historydatamogi = hdm
     lcms_data_transfer.transfer(celery_obj=self)
+
+    can_mogi = [ CAnnotationMOGI(cannotation=c) for c in CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all() ]
+
+    CAnnotationMOGI.objects.bulk_create(can_mogi)
+
+
 

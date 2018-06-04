@@ -1,9 +1,13 @@
 from django.views.generic.edit import CreateView
 from django.contrib.auth.forms import UserCreationForm
-from django.conf.urls import url
+from django.conf.urls import url,include
 from django.urls import reverse
 from django.contrib.auth import views as auth_views
 import views
+
+from rest_framework import routers
+router = routers.DefaultRouter()
+router.register(r'incoming_galaxy_data', views.IncomingGalaxyDataViewSet)
 
 urlpatterns = [
     #############################################
@@ -40,6 +44,13 @@ urlpatterns = [
     # Peak and annotation summary
     ##############################################
     url(r'^cpeakgroupmeta_summary_mogi/$', views.CPeakGroupMetaListMogiView.as_view(), name='cpeakgroupmeta_summary_mogi'),
-    url(r'^canns_all_mogi/$', views.CPeakGroupMetaListMogiView.as_view(), name='canns_all_mogi'),
+    url(r'^canns_all_mogi/$', views.CAnnotationListAllMogiView.as_view(), name='canns_all_mogi'),
 
+    ##############################################
+    # REST
+    ##############################################
+    url(r'^rest/', include(router.urls)),
+    url(r'^incoming_galaxy_data_list/$', views.IncomingGalaxyDataListView.as_view(), name='incoming_galaxy_data_list'),
+    url(r'^history_mogi_data_from_rest_save/(?P<galaxy_name>\w+)/(?P<galaxy_data_id>\w+)/(?P<galaxy_history_id>\w+)/$',
+        views.HistoryDataMogiFromRestCreateView.as_view(), name='history_mogi_data_from_rest_save'),
 ]

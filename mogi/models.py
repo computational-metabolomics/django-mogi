@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import os
+
 from django.db import models
 
+
 from galaxy.models import GalaxyInstanceTracking, FilesToGalaxyDataLibraryParam, HistoryData
-from misa.models import Investigation, Assay
+from misa.models import Investigation, Assay, Study
 
 from metab.models import CAnnotation, Compound, CPeakGroupMeta
 
@@ -24,15 +27,76 @@ class ISAGalaxyTrack(models.Model):
 class HistoryDataMOGI(HistoryData):
     investigation = models.ForeignKey(Investigation, on_delete=models.CASCADE, null=True, blank=True)
 
+    def __str__(self):              # __unicode__ on Python 2
+        return self.investigation.name
+
+
+
 
 class CPeakGroupMetaMOGI(CPeakGroupMeta):
     historydatamogi = models.ForeignKey(HistoryDataMOGI, on_delete=models.CASCADE)
     assay = models.ManyToManyField(Assay)
 
+    @property
+    def assay_names(self):
+        return ', '.join(l.name for l in self.assay.all())
 
-class CAnnotationMOGI(CAnnotation):
-    galaxy_history = models.ForeignKey(GalaxyInstanceTracking, on_delete=models.CASCADE)
-    assay = models.ManyToManyField(Assay)
+
+    @property
+    def study_names(self):
+        return ', '.join(l['study__name'] for l in self.assay.all().values('study__name'))
+
+    @property
+    def filename(self):
+        return os.path.basename(self.metabinputdata.gfile.data_file.name)
+
+    @property
+    def filepath(self):
+        return self.metabinputdata.gfile.data_file
+
+
+
+
+
+
+class CAnnotationMOGI(models.Model):
+    cannotation = models.OneToOneField(CAnnotation)
+
+    @property
+    def investigation_names(self):
+        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
+        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
+        return hdm.investigation.name
+
+    @property
+    def study_names(self):
+        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
+        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
+        investigation = hdm.investigation
+        return ', '.join(s.name for s in Study.objects.filter(investigation=investigation))
+
+    @property
+    def assay_names(self):
+        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
+        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
+        investigation = hdm.investigation
+        return ', '.join(a.name for a in Assay.objects.filter(study__investigation=investigation))
+
+    @property
+    def galaxy_history_data_name(self):
+        # for mogi only
+        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
+        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
+        return hdm.name
+
+    @property
+    def galaxy_history_name(self):
+        # for mogi only
+        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
+        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
+        return hdm.history.name
+
+
 
 
 class AnnotationSummary(models.Model):
@@ -48,3 +112,16 @@ class AnnotationSummary(models.Model):
 
     def __str__(self):              # __unicode__ on Python 2
         return '{} {}'.format(self.compound, self.lcms_ann_level)
+
+
+
+class IncomingGalaxyData(models.Model):
+    galaxy_url = models.TextField(max_length=100, null=True, blank=True)
+    galaxy_name = models.TextField(max_length=100)
+    galaxy_data_id = models.TextField(max_length=100)
+    galaxy_history_id = models.TextField(max_length=100)
+    galaxy_history_name = models.TextField(max_length=100, null=True, blank=True)
+    other_details = models.TextField(max_length=100, null=True, blank=True)
+
+    def __str__(self):              # __unicode__ on Python 2
+        return self.galaxy_data_id
