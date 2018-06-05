@@ -71,12 +71,12 @@ class CAnnotationMOGI(models.Model):
     @property
     def study_names(self):
         cpg = self.cannotation.cpeakgroup
-        return ', '.join(a.name for a in Study.objects.filter(assay__assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg))
+        return ', '.join(a.name for a in Study.objects.filter(assay__assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg).distinct())
 
     @property
     def assay_names(self):
         cpg = self.cannotation.cpeakgroup
-        return ', '.join(a.name for a in Assay.objects.filter(assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg))
+        return ', '.join(a.name for a in Assay.objects.filter(assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg).distinct())
 
     @property
     def galaxy_history_data_name(self):
