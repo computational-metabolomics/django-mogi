@@ -70,17 +70,13 @@ class CAnnotationMOGI(models.Model):
 
     @property
     def study_names(self):
-        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
-        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
-        investigation = hdm.investigation
-        return ', '.join(s.name for s in Study.objects.filter(investigation=investigation))
+        cpg = self.cannotation.cpeakgroup
+        return ', '.join(a.name for a in Study.objects.filter(assay__assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg))
 
     @property
     def assay_names(self):
-        m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
-        hdm = HistoryDataMOGI.objects.get(metabinputdata=m)
-        investigation = hdm.investigation
-        return ', '.join(a.name for a in Assay.objects.filter(study__investigation=investigation))
+        cpg = self.cannotation.cpeakgroup
+        return ', '.join(a.name for a in Assay.objects.filter(assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg))
 
     @property
     def galaxy_history_data_name(self):
