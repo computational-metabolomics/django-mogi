@@ -61,7 +61,9 @@ class CPeakGroupMetaMOGI(CPeakGroupMeta):
 
 class CAnnotationMOGI(models.Model):
     cannotation = models.OneToOneField(CAnnotation)
+    # investigation_names = models.CharField(max_length=100, null=True, blank=True)
 
+    # originally as properties but took too long calculate. Quicker (to save at the point of upload)
     @property
     def investigation_names(self):
         m = self.cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata
@@ -71,6 +73,7 @@ class CAnnotationMOGI(models.Model):
     @property
     def study_names(self):
         cpg = self.cannotation.cpeakgroup
+
         return ', '.join(a.name for a in Study.objects.filter(assay__assaydetail__assayrun__run__mfile__xcmsfileinfo__cpeak__cpeakgroup=cpg).distinct())
 
     @property
