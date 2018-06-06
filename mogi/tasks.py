@@ -33,9 +33,16 @@ def save_lcms_mogi(self, hdm_id):
     lcms_data_transfer.historydatamogi = hdm
     lcms_data_transfer.transfer(celery_obj=self)
 
-    can_mogi = [ CAnnotationMOGI(cannotation=c) for c in CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all() ]
+    cans_mogi = []
+    for i, cann in enumerate(CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all()):
+        if i % 1000 == 0:
+            CAnnotationMOGI.objects.bulk_create(cans_mogi)
+            cans_mogi = []
+        cans_mogi.append(CAnnotationMOGI(cannotation=cann))
+        
+    CAnnotationMOGI.objects.bulk_create(cans_mogi)
 
-    CAnnotationMOGI.objects.bulk_create(can_mogi)
+
 
 
 
