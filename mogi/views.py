@@ -29,7 +29,7 @@ from galaxy.views import FilesToGalaxyDataLib, GenericFilesToGalaxyHistory, Work
 from galaxy.views import WorkflowRunView, TableFileSelectMixin
 from galaxy.utils.history_actions import get_history_status
 from mogi.models import HistoryDataMOGI
-
+from mogi.filter import CAnnotationMOGIFilter
 
 from rest_framework import viewsets
 from mogi.serializers import IncomingGalaxyDataSerializer
@@ -192,6 +192,7 @@ class CAnnotationListAllMogiView(ExportMixin, CAnnotationsListAllView):
     table_class = CAnnotationMogiTable
     model = CAnnotationMOGI
     export_name = 'all_annotations_chromatographic_peaks'
+    filterset_class = CAnnotationMOGIFilter
 
     def get_queryset(self):
         return self.model.objects.all().order_by('-cannotation__weighted_score')
