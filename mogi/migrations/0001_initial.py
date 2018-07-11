@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('galaxy', '0001_initial'),
-        ('metab', '0002_CUSTOM_IMPORT_DATA'),
+        ('mbrowse', '0002_CUSTOM_IMPORT_DATA'),
         ('misa', '0002_IMPORT_DATA'),
     ]
 
@@ -28,23 +28,23 @@ class Migration(migrations.Migration):
                 ('mzmax', models.FloatField(blank=True, max_length=100, null=True)),
                 ('rtmin', models.FloatField(blank=True, max_length=100, null=True)),
                 ('rtmax', models.FloatField(blank=True, null=True)),
-                ('compound', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='metab.Compound')),
+                ('compound', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='mbrowse.Compound')),
             ],
         ),
         migrations.CreateModel(
             name='CAnnotationMOGI',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cannotation', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='metab.CAnnotation')),
+                ('cannotation', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='mbrowse.CAnnotation')),
             ],
         ),
         migrations.CreateModel(
             name='CPeakGroupMetaMOGI',
             fields=[
-                ('cpeakgroupmeta_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='metab.CPeakGroupMeta')),
+                ('cpeakgroupmeta_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='mbrowse.CPeakGroupMeta')),
                 ('assay', models.ManyToManyField(to='misa.Assay')),
             ],
-            bases=('metab.cpeakgroupmeta',),
+            bases=('mbrowse.cpeakgroupmeta',),
         ),
         migrations.CreateModel(
             name='HistoryDataMOGI',

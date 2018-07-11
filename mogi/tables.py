@@ -4,9 +4,9 @@ from django_tables2.utils import A
 from misa.models import Investigation
 from galaxy.models import Workflow, History
 from galaxy.tables import HistoryTable, HistoryDataTable
-from metab.tables import CAnnotationTable, CPeakGroupMetaTable, NumberColumn2, NumberColumn4
+from mbrowse.tables import CAnnotationTable, CPeakGroupMetaTable, NumberColumn2, NumberColumn4
 from mogi.models import CPeakGroupMetaMOGI, CAnnotationMOGI, IncomingGalaxyData
-from metab.models import CAnnotation
+from mbrowse.models import CAnnotation
 from django_tables2_column_shifter.tables import ColumnShiftTable
 from django.utils.text import slugify
 # class InvestigationTableUpload(InvestigationTable):

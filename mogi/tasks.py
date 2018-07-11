@@ -4,7 +4,7 @@ from celery import shared_task
 
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 from galaxy.models import FilesToGalaxyDataLibraryParam
-from metab.models import MFile, MetabInputData, CAnnotation
+from mbrowse.models import MFile, MetabInputData, CAnnotation
 from mogi.utils.save_lcms import LcmsDataTransferMOGI
 from mogi.models import HistoryDataMOGI, CAnnotationMOGI
 

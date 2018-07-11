@@ -8,7 +8,7 @@ from django.db import models
 from galaxy.models import GalaxyInstanceTracking, FilesToGalaxyDataLibraryParam, HistoryData
 from misa.models import Investigation, Assay, Study
 
-from metab.models import CAnnotation, Compound, CPeakGroupMeta
+from mbrowse.models import CAnnotation, Compound, CPeakGroupMeta
 
 
 ################################################################################################################

@@ -1,4 +1,4 @@
-from metab.utils.save_lcms import LcmsDataTransfer
+from mbrowse.utils.save_lcms import LcmsDataTransfer
 from mogi.models import CPeakGroupMetaMOGI, CAnnotationMOGI
 from misa.models import Assay
 

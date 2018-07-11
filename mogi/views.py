@@ -18,9 +18,9 @@ from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiT
 from mogi.models import CAnnotationMOGI, CPeakGroupMetaMOGI, IncomingGalaxyData
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
 from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi
-from metab.utils.save_lcms import LcmsDataTransfer
-from metab.models import MFile, MetabInputData, CAnnotation
-from metab.views import CPeakGroupMetaListView, CAnnotationsListAllView
+from mbrowse.utils.save_lcms import LcmsDataTransfer
+from mbrowse.models import MFile, MetabInputData, CAnnotation
+from mbrowse.views import CPeakGroupMetaListView, CAnnotationsListAllView
 from django.db.models import Q
 
 from galaxy.models import Workflow, History

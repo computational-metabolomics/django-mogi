@@ -13,7 +13,7 @@ from django.conf import settings
 from galaxy.utils.galaxy_utils import create_library, get_gi_gu
 from galaxy.utils.upload_to_galaxy import add_filelist_datalib, link_files_in_galaxy
 from misa.models import Investigation, MISAFile
-from metab.models import MFile
+from mbrowse.models import MFile
 
 
 from mogi.models import ISAGalaxyTrack
