@@ -1,0 +1,203 @@
+{% extends "django_sb_admin/base.html" %}
+{% load static %}
+
+{% load staticfiles %}
+
+{% block sb_admin_css %}
+    <link href="{% static "css/sb-admin.css"%}" rel="stylesheet">
+    <link href="{% static 'css/mogi.css' %}" rel="stylesheet">
+
+{% endblock sb_admin_css %}
+
+{% block sb_admin_fonts_css %}
+    <link rel="stylesheet" href="{% static 'django_tables2/themes/paleblue/css/screen.css' %}" />
+    <link href="http://fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet" type="text/css">
+    <link href="{% static "font-awesome/css/font-awesome.min.css"%}" rel="stylesheet" type="text/css">
+{% endblock sb_admin_fonts_css %}
+
+{% block title %}MOGI{% endblock %}
+{% block sb_admin_header_url %}{% url "index" %}{% endblock sb_admin_header_url %}
+{% block sb_admin_header %}<img class="img-responsive" src="{% static 'img/logo.svg' %}" alt="MOGI" />  {% endblock sb_admin_header %}
+
+{% block sb_admin_title %}{% endblock sb_admin_title %}
+{% block sb_admin_subheading %}{% endblock sb_admin_subheading %}
+
+{% block sb_admin_navbar_right %}
+    <ul class="nav navbar-right top-nav">
+        <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>
+                    <ul class="dropdown-menu alert-dropdown">
+                        <li>
+                            <a href="#">TODO <span class="label label-default">Alert Badge</span></a>
+                        </li>
+{#                        <li>#}
+{#                            <a href="#">Alert Name <span class="label label-primary">primary</span></a>#}
+{#                        </li>#}
+{#                        <li>#}
+{#                            <a href="#">Alert Name <span class="label label-success">success</span></a>#}
+{#                        </li>#}
+{#                        <li>#}
+{#                            <a href="#">Alert Name <span class="label label-info">info</span></a>#}
+{#                        </li>#}
+{#                        <li>#}
+{#                            <a href="#">Alert Name <span class="label label-warning">warning</span></a>#}
+{#                        </li>#}
+{#                        <li>#}
+{#                            <a href="#">Alert Name <span class="label label-danger">danger</span></a>#}
+{#                        </li>#}
+{#                        <li class="divider"></li>#}
+{#                        <li>#}
+{#                            <a href="#">View All</a>#}
+{#                        </li>#}
+                    </ul>
+        </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {% if user.username %}{{ user.username }}{% else %}Anonymous{% endif %} <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                            {% if user.is_authenticated %}
+                                <li><a href="#"><i class="fa fa-fw fa-user"></i> Profile</a></li>
+                                <li><a href="#"><i class="fa fa-fw fa-gear"></i> Settings</a></li>
+
+                                <li class="divider"></li>
+                                <li><a href="{% url 'logout' %}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                            {% else %}
+                                <li><a href="{% url 'register' %}"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                                <li><a href="{% url 'login' %}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                            {% endif %}
+                    </ul>
+                </li>
+</ul>{% endblock sb_admin_navbar_right %}
+
+
+{% block sb_admin_sidebar %}
+    <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li {% if nav_active == "dashboard" %}class="active"{% endif %}>
+                        <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+                    </li>
+
+
+                    <li {% if nav_active == "galaxy" %}class="active"{% endif %}>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#isa_drop"><i class="fa fa-fw fa-sitemap"></i>  ISA <i class="fa fa-fw fa-caret-down"></i></a>
+                        <ul id="isa_drop" class="collapse">
+                            <li>
+                                <a href="{% url "ilist" %}"> ISA Summary</a>
+                            </li>
+                            <li>
+                                <a href="{% url "icreate" %}"> Create Investigation</a>
+                            </li>
+                            <li>
+                                <a href="{% url "screate" %}"> Create Study</a>
+                            </li>
+                            <li>
+                                <a href="{% url "acreate" %}"> Create Assay</a>
+                            </li>
+                            <li>
+                                <a href="{% url "smcreate" %}"> Create Study Sample</a>
+                            </li>
+                            <li>
+                                <a href="{% url "sfcreate" %}"> Create Study Factor</a>
+                            </li>
+                            <li>
+                                <a href="{% url "view_isa_data_files" %}"> View ISA Data Files</a>
+                            </li>
+                            <li>
+                                <a href="#"> Upload & Export ISA project</a>
+                            </li>
+                        </ul>
+                    </li>
+
+
+                    <li {% if nav_active == "galaxy" %}class="active"{% endif %}>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#galaxy_drop"><i class="fa fa-fw fa-space-shuttle"></i>  Galaxy <i class="fa fa-fw fa-caret-down"></i></a>
+                        <ul id="galaxy_drop" class="collapse">
+                            <li>
+                                <a href="{% url "galaxy_summary" %}"> Galaxy Summary</a>
+                            </li>
+                            <li>
+                                <a href="{% url "addgi" %}"> Register Galaxy Instance</a>
+                            </li>
+                            <li>
+                                <a href="{% url "addguser" %}"> Register Galaxy User</a>
+                            </li>
+                            <li>
+                                <a href="{% url "galaxy_isa_upload_datalib" %}"> Upload ISA project to Galaxy data library</a>
+                            </li>
+                            <li>
+                                <a href="{% url "galaxy_isa_fileselect_upload_datalib" %}"> Upload ISA data files to Galaxy data library</a>
+                            </li>
+                            <li>
+                                <a href="{% url "isa_workflow_summary" %}"> View & Run Workflows</a>
+                            </li>
+                            <li>
+                                <a href="{% url "history_mogi" %}"> History status</a>
+                            </li>
+                        </ul>
+                    </li>
+
+                <li {% if nav_active == "search" %}class="active"{% endif %}>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#metab_drop"><i class="fa fa-fw fa-bar-chart-o"></i> Browse, View & Search <i class="fa fa-fw fa-caret-down"></i></a>
+                        <ul id="metab_drop" class="collapse">
+                            <li>
+                                <a href="{% url "general_summary" %}"> <i class="fa fa-fw fa-list-alt"></i> Summary</a>
+                            </li>
+                            <li>
+                                <a href="javascript:;" data-toggle="collapse" data-target="#search_drop"><i class="fa fa-fw fa-search"></i>  Search <i class="fa fa-fw fa-caret-down"></i></a>
+                                <ul id="search_drop" class="collapse">
+                                <li>
+                                    <a href="{% url "search_frag" %}"> Fragmentation search</a>
+                                </li>
+                                <li>
+                                    <a href="{% url "search_mz" %}"> Search m/z</a>
+                                </li>
+                                <li>
+                                    <a href="{% url "search_nm" %}"> Search neutral mass</a>
+                                </li>
+                                <li>
+                                    <a href="{% url "search_result_summary" %}"> Search Results Summary</a>
+                                </li>
+                            </ul>
+                            </li>
+                                <li {% if nav_active == "browse" %}class="active"{% endif %}>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#browse_drop"><i class="fa fa-fw fa-align-left"></i>  Browse <i class="fa fa-fw fa-caret-down"></i></a>
+                        <ul id="browse_drop" class="collapse">
+                            <li>
+                                <a href="{% url "mfile_summary" %}"> Show all metabolomics files</a>
+                            </li>
+                            <li>
+                                <a href="{% url "cpeakgroupmeta_summary" %}"> Show LC-MS(/MS) datasets</a>
+                            </li>
+                            <li>
+                                <a href="#"> Show DI-MS(/MS) MSn datasets</a>
+                            </li>
+                        </ul>
+                    </li>
+                            </ul>
+                    </li>
+
+
+
+                <li {% if nav_active == "about" %}class="active"{% endif %}>
+                        <a href="{% url "about" %}"><i class="fa fa-fw fa-info-circle"></i> About</a>
+                </li>
+
+                </ul>
+            </div>
+{% endblock sb_admin_sidebar %}
+
+{% block sb_admin_content %}
+     {% block content %}
+     {% endblock %}
+
+
+
+{#    <footer> <!-- Marking the footer section -->#}
+{##}
+{##}
+{#        <img class="img-responsive" src="{% static 'img/logo_small2.svg' %}" alt="MOGI" />#}
+{##}
+{#    </footer>#}
+
+{% endblock %}
+

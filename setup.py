@@ -12,7 +12,11 @@ setup(
     version='0.0.1',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=open('requirements.txt').read().splitlines(),
+    install_requires=[
+        'django==1.11',
+        'django-galaxy',
+        'django-misa',
+    ],
     license='GNU License',  # example license
     description='Metabolomics Organisation with Galaxy and ISA',
     long_description=README,

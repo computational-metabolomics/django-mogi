@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-#  python manage.py test misa -v 3 --keepdb
-#  coverage run --source='.' manage.py test galaxy -v 3 --keepdb
-#  coverage report
-#  coverage html --omit="admin.py"
-
-import subprocess
-import os
-import requests
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.sessions.middleware import SessionMiddleware
