@@ -219,7 +219,7 @@ def index(request):
                                                          ).values('cpeakgroup').distinct())
 
 
-    return render(request, 'mogi/index.html', summary_d)
+    return render(request, 'gfiles/index.html', summary_d)
 
 def about(request):
     return render(request, 'mogi/about.html')

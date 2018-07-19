@@ -7,7 +7,6 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
     historydatamogi = ''
     assays = []
     def set_cpeakgroupmeta(self):
-        print 'CPeakGroupMetaMOGI'
 
         cpgm = CPeakGroupMetaMOGI(metabinputdata=self.md, historydatamogi=self.historydatamogi)
         cpgm.save()

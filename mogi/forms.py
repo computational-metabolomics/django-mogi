@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 # general python
-import urllib2
-import httplib2
 from bioblend.galaxy import GalaxyInstance
 from bioblend.galaxy.workflows import WorkflowClient
 from bioblend.galaxy.client import ConnectionError

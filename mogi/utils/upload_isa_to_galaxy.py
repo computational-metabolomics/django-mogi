@@ -1,3 +1,4 @@
+from __future__ import print_function
 import itertools
 import os
 import tempfile
@@ -20,7 +21,7 @@ from mogi.models import ISAGalaxyTrack
 
 
 def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id, celery_obj=''):
-    print 'galaxy isa '
+
     # ... Should this just be for admin? or shall all user have ability ? .... not sure
 
     # update celery
@@ -50,7 +51,7 @@ def create_samplelist(user_id, igrp):
     nm = get_namemap()
     fnm = 'samplelist_{}.tabular'.format(igrp[0][nm['investigation']].replace(" ", "_"))
     tmp_pth = os.path.join(dirpth, fnm)
-    print tmp_pth
+
     with open(tmp_pth, 'wb') as csvfile:
         writer = csv.writer(csvfile, delimiter='\t')
         writer.writerow(
@@ -192,7 +193,7 @@ def save_to_galaxy(filelist, galaxy_isa_upload_param, lc, gu, gi, galaxy_pass, l
 
 def create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name_map):
     investigation_n = igrp[0][name_map['investigation']]
-    print '========> Investigation:', investigation_n
+    print('========> Investigation:', investigation_n)
 
     if galaxy_isa_upload_param.remove:
         igt_for_removal = ISAGalaxyTrack.objects.filter(investigation__name=investigation_n)
@@ -220,7 +221,7 @@ def create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name
 
 def create_study_folder(sgrp, lc, lib, name_map, ifolder):
     study_n = sgrp[0][name_map['study']]
-    print '====> Study:', study_n
+    print('====> Study:', study_n)
     sfolder = lc.create_folder(library_id=lib['id'],
                                folder_name=study_n,
                                description='isa_study',
@@ -232,7 +233,7 @@ def create_study_folder(sgrp, lc, lib, name_map, ifolder):
 def create_assay_folder(agrp, lc, lib, name_map, sfolder):
     # get the study name of the group and create folder
     assay_n = agrp[0][name_map['assay']]
-    print '========> Assay:', assay_n
+    print('========> Assay:', assay_n)
 
     afolder = lc.create_folder(library_id=lib['id'],
                                folder_name=assay_n,
