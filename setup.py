@@ -12,10 +12,11 @@ setup(
     version='0.0.1',
     packages=find_packages(),
     include_package_data=True,
+    install_requires=open('requirements.txt').read().splitlines(),
     license='GNU License',  # example license
-    description='Metabolome Organisation with Galaxy and ISA',
+    description='Metabolomics Organisation with Galaxy and ISA',
     long_description=README,
-    url='https://www.example.com/',
+    url='https://mogi.readthedocs.io',
     author='Thomas N lawson',
     author_email='thomas.nigel.lawson@gmail.com',
     classifiers=[
@@ -23,10 +24,11 @@ setup(
         'Framework :: Django',
         'Framework :: Django :: 1.11',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU License',  # example license
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],

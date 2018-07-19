@@ -1,18 +1,22 @@
 import os
 SECRET_KEY = 'fake-key'
 INSTALLED_APPS = [
+
+
+    'mogi',
+    'misa',
+    'mbrowse',
+    'galaxy',
+    'gfiles',
+
+    'django_tables2',
+    'django_tables2_column_shifter',
+    'django_filters',
+    'bootstrap3',
+    'django_sb_admin',
     'dal',
     'dal_select2',
 
-    'gfiles',
-    'metab',
-    'dma',
-    'misa',
-    'galaxy',
-    'mogi',
-
-
-    'easy_thumbnails',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
