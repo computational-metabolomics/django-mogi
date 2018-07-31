@@ -2,12 +2,14 @@ from __future__ import print_function
 import itertools
 import os
 import tempfile
+import shutil
 import csv
+import sys
 from operator import itemgetter
 from django.core.files import File
 from bioblend.galaxy.libraries import LibraryClient
 from bioblend.galaxy.folders import FoldersClient
-
+from io import TextIOWrapper
 
 from django.conf import settings
 
@@ -15,7 +17,7 @@ from galaxy.utils.galaxy_utils import create_library, get_gi_gu
 from galaxy.utils.upload_to_galaxy import add_filelist_datalib, link_files_in_galaxy
 from misa.models import Investigation, MISAFile
 from mbrowse.models import MFile
-
+from ftplib import FTP, error_perm
 
 from mogi.models import ISAGalaxyTrack
 
@@ -41,18 +43,25 @@ def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id
     mfiles = get_mfile_qs(pks)
     #
     # # Add the files to Galaxy data library
-    create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param, user_id, celery_obj)
 
-
-
+    try:
+        create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param, user_id, celery_obj)
+    except error_perm as e:
+        print('ERROR CATCH', e)
+        if celery_obj:
+            celery_obj.update_state(state='FAILURE',
+                                    meta={'current': 0.0, 'total': 100})
+        return 0
+    return 1
 
 def create_samplelist(user_id, igrp):
     dirpth = tempfile.mkdtemp()
+    # dirpth = '/tmp/'
     nm = get_namemap()
     fnm = 'samplelist_{}.tabular'.format(igrp[0][nm['investigation']].replace(" ", "_"))
     tmp_pth = os.path.join(dirpth, fnm)
 
-    with open(tmp_pth, 'wb') as csvfile:
+    with open(tmp_pth, 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter='\t')
         writer.writerow(
                 ['prefix', 'sample_class', 'code_field', 'blank', 'sample_type', 'full_path', 'original_filename', 'investigation',
@@ -66,26 +75,32 @@ def create_samplelist(user_id, igrp):
             code_field = m[nm['code_field']]
             code_field_r_compat = code_field.replace('_', '.')
             code_field_r_compat = code_field_r_compat.replace('-', '.')
-            writer.writerow([
-                    m[nm['prefix']],
-                    code_field_r_compat,
-                    code_field,
-                    blank,
-                    m[nm['sampletype']],
-                    m['data_file'],
-                    m['original_filename'],
-                    m[nm['investigation']],
-                    m[nm['investigation_id']],
-                    m[nm['study']],
-                    m[nm['assay']],
-                    m['id']
-                ])
+            row = [
+                m[nm['prefix']],
+                code_field_r_compat,
+                code_field,
+                blank,
+                m[nm['sampletype']],
+                m['data_file'],
+                m['original_filename'],
+                m[nm['investigation']],
+                m[nm['investigation_id']],
+                m[nm['study']],
+                m[nm['assay']],
+                m['id']
+            ]
+
+            writer.writerow(row)
             investigation_id = m[nm['investigation_id']]
+
 
     misafile = MISAFile(investigation_id=investigation_id, user_id=user_id)
     misafile.original_filename = fnm
     misafile.data_file.save(fnm, File(open(tmp_pth)))
+    misafile.save()
+
     fullpth = os.path.join(settings.MEDIA_ROOT, misafile.data_file.path)
+    print(fullpth)
     return fullpth, misafile.id
 
 

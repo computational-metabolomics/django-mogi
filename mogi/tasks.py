@@ -17,9 +17,9 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
 
     self.update_state(state='Uploading ISA projects to Galaxy', meta={'current': 0.1, 'total': 100})
     galaxy_isa_upload_param = FilesToGalaxyDataLibraryParam.objects.get(pk=param_pk)
-    galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id, self)
-
-
+    result_out = galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id, self)
+    if result_out:
+        self.update_state(state='SUCCESS', meta={'current': 100, 'total': 100})
 
 @shared_task(bind=True)
 def save_lcms_mogi(self, hdm_id):
