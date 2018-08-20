@@ -1,17 +1,15 @@
 {% extends 'base.html' %}
-{% block sb_admin_title %} Metab Summary {% endblock sb_admin_title %}
+{% block sb_admin_title %} MBrowse Summary {% endblock sb_admin_title %}
 {% block sb_admin_subheading %}  {% endblock sb_admin_subheading %}
 {% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a> {% endblock sb_admin_breadcrumb %}
-{% block sb_admin_breadcrumb_active %} / Metab Summary {% endblock sb_admin_breadcrumb_active %}
+{% block sb_admin_breadcrumb_active %} / MBrowse Summary {% endblock sb_admin_breadcrumb_active %}
 
 {% block content %}
 <blockquote class="blockquote text-left">
     <p class="mb-0">
 
-        This 'metab' application provides functionality to upload metabolomics datasets that can then be searched
-        and viewed. Currently implemented to upload LC-MS/(MS) datasets and associated annotation information
+        Browse, view and search metabolomic datasets.
 
-        (MOGI)
     </blockquote>
 
     <div class="page-header">
@@ -42,9 +40,12 @@
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-                        <a href="{% url "mfile_summary" %}" class="list-group-item">Show all metabolomics files</a>
-                        <a href="{% url "cpeakgroupmeta_summary_mogi" %}" class="list-group-item">Show LC-MS(/MS) datasets</a>
-                        <a href="{% url "canns_all_mogi" %}" class="list-group-item">Show LC-MS(/MS) annotations</a>
+                        <a href="{% url 'mfile_summary' %}" class="list-group-item">Show all metabolomics files</a>
+                        <a href="{% url 'cpeakgroupmeta_summary_mogi' %}" class="list-group-item">Show LC-MS(/MS) datasets</a>
+                        <a href="{% url 'canns_all_mogi' %}" class="list-group-item">Show LC-MS(/MS) annotations</a>
+
+                        <a href="{% url 'cpeakgroupmeta_summary' %}" class="list-group-item">Show LC-MS(/MS) datasets (non MOGI)</a>
+                        <a href="{% url 'canns_all' %}" class="list-group-item">Show LC-MS(/MS) annotations (non MOGI)</a>
                     </div>
                 </div>
             </div>
@@ -52,12 +53,12 @@
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Analyse </h3>
+                    <h3 class="panel-title">Upload </h3>
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-                        <a href="#" class="list-group-item">Similarity (todo) </a>
-                        <a href="#" class="list-group-item">Trends (todo)   </a>
+                        <a href="{% url 'incoming_galaxy_data_list' %}" class="list-group-item">Upload dataset from Galaxy </a>
+                        <a href="{% url 'upload_lcms_dataset' %}" class="list-group-item">Upload dataset manually </a>
                     </div>
                 </div>
             </div>

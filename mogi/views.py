@@ -20,7 +20,7 @@ from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRun
 from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi
 from mbrowse.utils.save_lcms import LcmsDataTransfer
 from mbrowse.models import MFile, MetabInputData, CAnnotation
-from mbrowse.views import CPeakGroupMetaListView, CAnnotationsListAllView
+from mbrowse.views import CPeakGroupMetaListView, CAnnotationListAllView
 from django.db.models import Q
 
 from galaxy.models import Workflow, History
@@ -108,6 +108,7 @@ class ISAFileSelectToGalaxyHist(GenericFilesToGalaxyHistory):
 
 class ISAWorkflowListView(WorkflowListView):
     table_class = WorkflowTableISA
+    redirect_to = 'isa_workflow_summary'
 
 
 ########################################################################################################################
@@ -188,7 +189,7 @@ class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
     table_class =CPeakGroupMetaMogiTable
     model = CPeakGroupMetaMOGI
 
-class CAnnotationListAllMogiView(ExportMixin, CAnnotationsListAllView):
+class CAnnotationListAllMogiView(CAnnotationListAllView):
     table_class = CAnnotationMogiTable
     model = CAnnotationMOGI
     export_name = 'all_annotations_chromatographic_peaks'
