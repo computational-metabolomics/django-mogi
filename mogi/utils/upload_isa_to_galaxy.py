@@ -9,6 +9,7 @@ from operator import itemgetter
 from django.core.files import File
 from bioblend.galaxy.libraries import LibraryClient
 from bioblend.galaxy.folders import FoldersClient
+from bioblend.galaxy.client import ConnectionError
 from io import TextIOWrapper
 
 from django.conf import settings
@@ -28,8 +29,8 @@ def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id
 
     # update celery
     if celery_obj:
-        celery_obj.update_state(state='Initialising galaxy',
-                          meta={'current': 0.1, 'total': 100})
+        celery_obj.update_state(state='RUNNING',
+                          meta={'current': 0.1, 'total': 100, 'status': 'Initialising galaxy'})
 
     # get the galaxy clients required for updating the galaxy instance
     git = galaxy_isa_upload_param.galaxyinstancetracking
@@ -50,8 +51,17 @@ def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id
         print('ERROR CATCH', e)
         if celery_obj:
             celery_obj.update_state(state='FAILURE',
-                                    meta={'current': 0.0, 'total': 100})
+                                    meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
         return 0
+    except bioblend.ConnectionError as e:
+        print('ERROR CATCH', e)
+        if celery_obj:
+            celery_obj.update_state(state='FAILURE',
+                                    meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
+        return 0
+
+
+
     return 1
 
 def create_samplelist(user_id, igrp):
@@ -153,6 +163,7 @@ def create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param
 
 
     for igrp in igrps:
+        print(igrp)
         # get the investigation name of the group, and create folder
         ifolder, sgrps = create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name_map)
         samplelist_pth, misafile = create_samplelist(user_id, igrp)
@@ -161,10 +172,12 @@ def create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param
                                         lib['id'], ifolder['id'], 'samplelist', [{'id':misafile}])
 
         for sgrp in sgrps:
+            print(sgrp)
             # get the study name of the group and create folder
             sfolder, agrps = create_study_folder(sgrp, lc, lib, name_map, ifolder)
 
             for agrp in agrps:
+                print(agrp)
 
                 study_n = agrp[0][name_map['study']]
                 investigation_n = agrp[0][name_map['investigation']]
@@ -177,8 +190,9 @@ def create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param
                         count = 0.1
                     else:
                         count = file_count
-                    celery_obj.update_state(state='A:'.format(assay_n[:47]),
-                                            meta={'current': count, 'total': len(mfiles)+1})
+                    celery_obj.update_state(state='RUNNING',
+                                            meta={'current': count, 'total': len(mfiles)+1,
+                                                  'status': 'Assay: {}'.format(assay_n)})
 
                 afolder = create_assay_folder(agrp, lc, lib, name_map, sfolder)
                 filelist = [os.path.join(settings.MEDIA_ROOT, f['data_file']) for f in agrp]

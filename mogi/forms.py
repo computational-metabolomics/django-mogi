@@ -1,26 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 # general python
-from bioblend.galaxy import GalaxyInstance
-from bioblend.galaxy.workflows import WorkflowClient
-from bioblend.galaxy.client import ConnectionError
 
 # standard django
-from django.core.validators import URLValidator
-from django.core.exceptions import ValidationError
 from django import forms
-from django.contrib.auth.models import User
-
-
-from galaxy.forms import FilesToGalaxyDataLibraryParamForm, HistoryDataForm, WorkflowRunForm
-from galaxy.models import FilesToGalaxyDataLibraryParam
-from mogi.models import HistoryDataMOGI
 
 # django external apps
-# none
+from dal import autocomplete
 
 # django custom user external apps
-# none
+from galaxy.forms import FilesToGalaxyDataLibraryParamForm, WorkflowRunForm
+from galaxy.models import FilesToGalaxyDataLibraryParam
+from mogi.models import HistoryDataMOGI
 
 
 class ISAtoGalaxyParamForm(FilesToGalaxyDataLibraryParamForm):
@@ -28,7 +19,9 @@ class ISAtoGalaxyParamForm(FilesToGalaxyDataLibraryParamForm):
     class Meta:
         model = FilesToGalaxyDataLibraryParam
         fields = ('galaxyinstancetracking', 'remove', 'link2files', 'ftp')
-
+        widgets = {
+            'galaxyinstancetracking': autocomplete.ModelSelect2(url='galaxyinstancetracking-autocomplete'),
+        }
 
 
 class ISAWorkflowRunForm(WorkflowRunForm):

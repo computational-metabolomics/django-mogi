@@ -24,35 +24,35 @@
 {% block sb_admin_subheading %}Metabolomics organisation with Galaxy and ISA{% endblock sb_admin_subheading %}
 
 {% block sb_admin_navbar_right %}
+
+
     <ul class="nav navbar-right top-nav">
+
         <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>
+                    {% if messages %}
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="color:red" class="fa fa-bell"></i> <b class="caret"></b></a>
+                    {% else %}
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>
+                    {% endif %}
+
                     <ul class="dropdown-menu alert-dropdown">
-                        <li>
-                            <a href="#">TODO <span class="label label-default">Alert Badge</span></a>
-                        </li>
-{#                        <li>#}
-{#                            <a href="#">Alert Name <span class="label label-primary">primary</span></a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="#">Alert Name <span class="label label-success">success</span></a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="#">Alert Name <span class="label label-info">info</span></a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="#">Alert Name <span class="label label-warning">warning</span></a>#}
-{#                        </li>#}
-{#                        <li>#}
-{#                            <a href="#">Alert Name <span class="label label-danger">danger</span></a>#}
-{#                        </li>#}
-{#                        <li class="divider"></li>#}
-{#                        <li>#}
-{#                            <a href="#">View All</a>#}
-{#                        </li>#}
+
+                        <!--<li>-->
+                            <!--<a href="location.reload()">Clear alerts</a>-->
+                        <!--</li>-->
+                        <!--<li class="divider"></li>-->
+
+                        <!--{% if messages %}-->
+                            <!--{% for message in messages %}-->
+                            <!--<li>-->
+                                <!--<a href="#"><span class="label label-{{ message.tags }}" >{{ message }}</span></a>-->
+                            <!--</li>-->
+                            <!--{% endfor %}-->
+                        <!--{% endif %}-->
                     </ul>
+
         </li>
-                <li class="dropdown">
+        <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {% if user.username %}{{ user.username }}{% else %}Anonymous{% endif %} <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                             {% if user.is_authenticated %}
@@ -175,6 +175,11 @@
 {% endblock sb_admin_sidebar %}
 
 {% block sb_admin_content %}
+
+
+
+
+
      {% block content %}
      {% endblock %}
 

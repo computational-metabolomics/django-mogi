@@ -1,6 +1,7 @@
 django==1.11
 django-gfiles
 django-mbrowse
+django-autocomplete-light==3.2.10
 isatools;  python_version > '2.7'
 -e git+https://github.com/ISA-tools/isa-api.git@2f0881949fc46c2175ab293dbd4192f69c3d7a57#egg=isatools
 django-misa

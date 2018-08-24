@@ -7,19 +7,33 @@ from galaxy.models import FilesToGalaxyDataLibraryParam
 from mbrowse.models import MFile, MetabInputData, CAnnotation
 from mogi.utils.save_lcms import LcmsDataTransferMOGI
 from mogi.models import HistoryDataMOGI, CAnnotationMOGI
+from gfiles.models import TrackTasks
+from django.urls import reverse
+
 
 @shared_task(bind=True)
 def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
     """
 
     """
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Uploading ISA projects to Galaxy', user_id=user_id)
+    tt.save()
 
-
-    self.update_state(state='Uploading ISA projects to Galaxy', meta={'current': 0.1, 'total': 100})
+    self.update_state(state='RUNNING', meta={'current': 0.1, 'total': 100, 'status': 'Uploading ISA projects to Galaxy'})
     galaxy_isa_upload_param = FilesToGalaxyDataLibraryParam.objects.get(pk=param_pk)
+
     result_out = galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id, self)
+
     if result_out:
-        self.update_state(state='SUCCESS', meta={'current': 100, 'total': 100})
+        self.update_state(state='SUCCESS', meta={'current': 100, 'total': 100, 'status': 'completed'})
+
+    # save successful result
+    tt.result = reverse('galaxy_summary')
+    tt.state = 'SUCCESS'
+    tt.save()
+
+
+
 
 @shared_task(bind=True)
 def save_lcms_mogi(self, hdm_id):
@@ -31,7 +45,10 @@ def save_lcms_mogi(self, hdm_id):
     md.save()
     lcms_data_transfer = LcmsDataTransferMOGI(md.id, mfiles_ids)
     lcms_data_transfer.historydatamogi = hdm
-    lcms_data_transfer.transfer(celery_obj=self)
+
+    if not lcms_data_transfer.transfer(celery_obj=self):
+        # something wen't wrong don't perform the remaining analysis
+        return 0
 
     cans_mogi = []
     for i, cann in enumerate(CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all()):
