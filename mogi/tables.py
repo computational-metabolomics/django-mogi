@@ -6,6 +6,7 @@ from galaxy.models import Workflow, History
 from galaxy.tables import HistoryTable, HistoryDataTable
 from mbrowse.tables import CAnnotationTable, CPeakGroupMetaTable, NumberColumn2, NumberColumn4
 from mogi.models import CPeakGroupMetaMOGI, CAnnotationMOGI, IncomingGalaxyData
+from gfiles.utils.icons import EYE, DOWN, PLAY, SAVE
 from mbrowse.models import CAnnotation
 from django_tables2_column_shifter.tables import ColumnShiftTable
 from django.utils.text import slugify
@@ -17,8 +18,10 @@ from django.utils.text import slugify
 #                                                "td__input": {"onclick": "addfile(this)"}},
 #                                            )
 
+
+
 class InvestigationTableUpload(ColumnShiftTable):
-    details = tables.LinkColumn('idetail', text='details', args=[A('id')])
+    details = tables.LinkColumn('idetail', text=EYE, args=[A('id')])
 
     check = tables.CheckBoxColumn(accessor="id",
                                                attrs={
@@ -36,7 +39,7 @@ class InvestigationTableUpload(ColumnShiftTable):
 
 
 class WorkflowTableISA(ColumnShiftTable):
-    run = tables.LinkColumn('isa_workflow_run', text='run', args=[A('id')])
+    run = tables.LinkColumn('isa_workflow_run', text=PLAY, args=[A('id')])
 
     def get_column_default_show(self):
         self.column_default_show = ['id', 'name', 'galaxyinstancetracking', 'accessible', 'run']
@@ -50,7 +53,7 @@ class WorkflowTableISA(ColumnShiftTable):
 
 
 class HistoryMogiTable(HistoryTable):
-    history_mogi_data = tables.LinkColumn('history_mogi_data', text='View data', args=[A('id')])
+    history_mogi_data = tables.LinkColumn('history_mogi_data', text=EYE, args=[A('id')])
 
     def get_column_default_show(self):
         self.column_default_show = ['galaxyinstancetracking', 'name', 'update_time', 'running', 'estimated_progress', 'history_mogi_data', 'check']
@@ -74,7 +77,7 @@ class HistoryMogiTable(HistoryTable):
 
 class HistoryMogiDataTable(HistoryDataTable):
     mogi_create = tables.LinkColumn('history_mogi_data_save', verbose_name='Save metabolomics data',
-                                            text='Save item', args=[A('history_internal_id'), A('id')])
+                                            text=SAVE, args=[A('history_internal_id'), A('id')])
 
     def get_column_default_show(self):
         self.column_default_show = ['galaxy_instance', 'name', 'data_type', 'create_time', 'download_url', 'mogi_create']
@@ -93,10 +96,7 @@ class CPeakGroupMetaMogiTable(ColumnShiftTable):
     investigation = tables.Column(accessor='historydatamogi.investigation.name', verbose_name='Investigation')
     study = tables.Column(accessor='study_names', verbose_name='Study')
     assay = tables.Column(accessor='assay_names')
-    c_peak_group_table = tables.LinkColumn('cpeakgroup_summary', verbose_name='View grouped peaklist', text='view', args=[A('id')])
-
-
-
+    c_peak_group_table = tables.LinkColumn('cpeakgroup_summary', verbose_name='View grouped peaklist', text=EYE, args=[A('id')])
 
 
 
@@ -134,6 +134,9 @@ class CAnnotationMogiTable(ColumnShiftTable):
     inputdata = tables.Column(accessor='cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata.id',
                               verbose_name='Input Dataset (id)')
 
+    inputdata_name = tables.Column(accessor='cannotation.cpeakgroup.cpeakgroupmeta.metabinputdata.name',
+                              verbose_name='Input Dataset (name)')
+
     investigation = tables.Column(accessor='investigation_names', verbose_name='Investigation')
     study = tables.Column(accessor='study_names',
                                    verbose_name='Study')
@@ -160,7 +163,7 @@ class CAnnotationMogiTable(ColumnShiftTable):
     rtmed = NumberColumn2(accessor='cannotation.cpeakgroup.rtmed', verbose_name='RT Med')
 
     spectral_matching_average_score = NumberColumn2(accessor='cannotation.spectral_matching_average_score')
-    metfrag_average_score =NumberColumn2(accessor='cannotation.metfrag_average_score ')
+    metfrag_average_score = NumberColumn2(accessor='cannotation.metfrag_average_score')
     mzcloud_average_score = NumberColumn2(accessor='cannotation.mzcloud_average_score')
     sirius_csifingerid_average_score = NumberColumn2(accessor='cannotation.sirius_csifingerid_average_score')
     ms1_average_score = NumberColumn2(accessor='cannotation.ms1_average_score')
@@ -169,7 +172,7 @@ class CAnnotationMogiTable(ColumnShiftTable):
 
 
 
-    # how to get assay? Detials are stored in the filenames... Perhaps better to create a new model to store this information
+    # how to get assay? Details are stored in the filenames... Perhaps better to create a new model to store this information
 
     # def get_column_default_show(self):
     #     self.column_default_show = ['galaxy_instance', 'name', 'data_type', 'create_time', 'download_url', 'mogi_create']
@@ -179,12 +182,11 @@ class CAnnotationMogiTable(ColumnShiftTable):
         attrs = {'class': 'paleblue'}
         template = 'django_tables2/bootstrap.html'
         model = CAnnotationMOGI
-        export_formats = ['csv', 'xls']
 
 
 class IncomingGalaxyDataTable(ColumnShiftTable):
     mogi_create = tables.LinkColumn('history_mogi_data_from_rest_save', verbose_name='Save metabolomics data',
-                                            text='Save item', args=[A('galaxy_name'), A('galaxy_data_id'), A('galaxy_history_id')])
+                                            text=SAVE, args=[A('galaxy_name'), A('galaxy_data_id'), A('galaxy_history_id')])
 
 
     class Meta:

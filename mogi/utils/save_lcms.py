@@ -6,6 +6,7 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
     cpeakgroupmeta_class = CPeakGroupMetaMOGI
     historydatamogi = ''
     assays = []
+
     def set_cpeakgroupmeta(self, celery_obj):
 
         cpgm = CPeakGroupMetaMOGI(metabinputdata=self.md, historydatamogi=self.historydatamogi)
@@ -40,6 +41,9 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
             cpgm.assay.add(a)
 
         self.md.name = md_name
+        self.md.save()
         self.assays = assays
+        self.cpgm = cpgm
+
         return cpgm
 

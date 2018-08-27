@@ -36,7 +36,16 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
 
 
 @shared_task(bind=True)
-def save_lcms_mogi(self, hdm_id):
+def save_lcms_mogi(self, hdm_id, userid):
+    ###################
+    # Save task
+    ###################
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='LC-MSMS data upload', user_id=userid)
+    tt.save()
+
+    ####################
+    # Perform operation
+    ####################
     hdm = HistoryDataMOGI.objects.get(pk=hdm_id)
 
     mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=hdm.investigation.pk)
@@ -58,6 +67,15 @@ def save_lcms_mogi(self, hdm_id):
         cans_mogi.append(CAnnotationMOGI(cannotation=cann))
 
     CAnnotationMOGI.objects.bulk_create(cans_mogi)
+
+    ####################
+    # Save data
+    ####################
+    tt.result = reverse('cpeakgroupmeta_summary_mogi')
+    tt.state = 'SUCCESS'
+    tt.save()
+
+
 
 
 

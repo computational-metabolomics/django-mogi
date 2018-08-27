@@ -140,7 +140,7 @@ class HistoryDataMogiCreateView(HistoryDataCreateView):
         obj = self.save_form(form)
         # first get all the mfiles associated with the investigation
 
-        result = save_lcms_mogi.delay(obj.pk)
+        result = save_lcms_mogi.delay(obj.pk, self.request.user.id)
         self.request.session['result'] = result.id
         return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
