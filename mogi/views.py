@@ -17,10 +17,10 @@ from misa.filter import ISAFileFilter
 from mogi.tables import InvestigationTableUpload, WorkflowTableISA, HistoryMogiTable, HistoryMogiDataTable, CPeakGroupMetaMogiTable, CAnnotationMogiTable, IncomingGalaxyDataTable
 from mogi.models import CAnnotationMOGI, CPeakGroupMetaMOGI, IncomingGalaxyData
 from mogi.forms import ISAtoGalaxyParamForm, HistoryMogiDataForm, ISAWorkflowRunForm
-from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi
+from mogi.tasks import galaxy_isa_upload_datalib_task, save_lcms_mogi, download_cannotations_mogi_task
 from mbrowse.utils.save_lcms import LcmsDataTransfer
 from mbrowse.models import MFile, MetabInputData, CAnnotation
-from mbrowse.views import CPeakGroupMetaListView, CAnnotationListAllView
+from mbrowse.views import CPeakGroupMetaListView, CAnnotationListAllView, CAnnotationDownloadView
 from django.db.models import Q
 
 from galaxy.models import Workflow, History
@@ -180,8 +180,11 @@ class HistoryDataMogiFromRestCreateView(HistoryDataMogiCreateView):
 
 class SaveLcmsFromFromRest(LoginRequiredMixin, View):
 
-    def get(self, request, *args, **kwargs):
 
+    def get(self, request, *args, **kwargs):
+        return render(request, 'mogi/confirm_submission.html')
+
+    def post(self, request, *args, **kwargs):
         galaxy_name = self.kwargs.get('galaxy_name')
         galaxy_data_id = self.kwargs.get('galaxy_data_id')
         galaxy_history_id = self.kwargs.get('galaxy_history_id')
@@ -201,6 +204,7 @@ class SaveLcmsFromFromRest(LoginRequiredMixin, View):
 
 
 
+
 ########################################################################################################################
 # django-metab Peak and annotation summary
 ########################################################################################################################
@@ -208,15 +212,29 @@ class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
     table_class =CPeakGroupMetaMogiTable
     model = CPeakGroupMetaMOGI
 
+
 class CAnnotationListAllMogiView(CAnnotationListAllView):
     table_class = CAnnotationMogiTable
     model = CAnnotationMOGI
-    export_name = 'all_annotations_chromatographic_peaks'
     filterset_class = CAnnotationMOGIFilter
+    template_name = 'mogi/cpeakgroup_annotations_all_mogi.html'
 
     def get_queryset(self):
         return self.model.objects.all().order_by('-cannotation__weighted_score')
 
+
+
+class CAnnotationDownloadMogiView(CAnnotationDownloadView):
+
+    def form_valid(self, form):
+        obj = form.save()
+        obj.user = self.request.user
+        obj.save()
+
+        result = download_cannotations_mogi_task.delay(obj.pk, self.request.user.id)
+        self.request.session['result'] = result.id
+
+        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
 
 ########################################################################################################################

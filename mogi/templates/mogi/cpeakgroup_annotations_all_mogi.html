@@ -1,0 +1,18 @@
+{% extends 'gfiles/table_with_filter_above.html' %}
+{% block sb_admin_title %}LC peak annotation {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "general_summary" %}"> MBrowse Summary</a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / LC-MS (/MS) peak annotation (all) {% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Summary{% endblock panel_title %}
+
+{% block preamble %}
+     <div class="row">
+        <div class="col-lg-12">
+            <p> <a href="{% url "canns_download_mogi" %}"><i class="fa fa-download"></i> Download annotations </a></p>
+        </div>
+    </div>
+
+{% endblock preamble %}

@@ -36,6 +36,7 @@ urlpatterns = [
     ##############################################
     url(r'^cpeakgroupmeta_summary_mogi/$', views.CPeakGroupMetaListMogiView.as_view(), name='cpeakgroupmeta_summary_mogi'),
     url(r'^canns_all_mogi/$', views.CAnnotationListAllMogiView.as_view(), name='canns_all_mogi'),
+    url(r'^canns_download_mogi/$', views.CAnnotationDownloadMogiView.as_view(), name='canns_download_mogi'),
 
     ##############################################
     # REST

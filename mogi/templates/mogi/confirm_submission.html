@@ -1,0 +1,10 @@
+{% extends 'gfiles/simple_form.html' %}
+{% block sb_admin_title %}Upload LC-MS/MS data from Galaxy {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small>(confirmation)</small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "general_summary" %}"> MBrowse Summary</a>
+    / <a href="{% url "incoming_galaxy_data_list" %}"> Incoming Galaxy data</a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / Upload LC-MS/MS data from Galaxy (confirmation){% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Confirm{% endblock panel_title %}
