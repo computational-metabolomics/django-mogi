@@ -64,6 +64,18 @@ def save_lcms_mogi(self, userid, galaxy_name, galaxy_data_id, galaxy_history_id,
         # something wen't wrong don't perform the remaining analysis
         return 0
 
+    self.update_state(state='RUNNING', meta={'current': 98, 'total': 100, 'status': 'Updating ISA links '})
+    cans_mogi = []
+    for i, cann in enumerate(CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all()):
+        if i % 5000 == 0:
+
+            CAnnotationMOGI.objects.bulk_create(cans_mogi)
+            cans_mogi = []
+        cans_mogi.append(CAnnotationMOGI(cannotation=cann))
+
+    CAnnotationMOGI.objects.bulk_create(cans_mogi)
+
+
     ####################
     # Save data
     ####################
@@ -95,18 +107,6 @@ def save_lcms_mogiOLD(self, hdm_id, userid):
     lcms_data_transfer = LcmsDataTransferMOGI(md.id, mfiles_ids)
     lcms_data_transfer.historydatamogi = hdm
 
-    if not lcms_data_transfer.transfer(celery_obj=self):
-        # something wen't wrong don't perform the remaining analysis
-        return 0
-
-    cans_mogi = []
-    for i, cann in enumerate(CAnnotation.objects.filter(cpeakgroup__cpeakgroupmeta__metabinputdata=md).all()):
-        if i % 1000 == 0:
-            CAnnotationMOGI.objects.bulk_create(cans_mogi)
-            cans_mogi = []
-        cans_mogi.append(CAnnotationMOGI(cannotation=cann))
-
-    CAnnotationMOGI.objects.bulk_create(cans_mogi)
 
     ####################
     # Save data
