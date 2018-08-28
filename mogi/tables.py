@@ -187,7 +187,7 @@ class CAnnotationMogiTable(ColumnShiftTable):
 
 
 class IncomingGalaxyDataTable(ColumnShiftTable):
-    mogi_create = tables.LinkColumn('save_lcms_from_from_rest', verbose_name='Save metabolomics data2',
+    mogi_create = tables.LinkColumn('save_lcms_from_from_rest', verbose_name='Save metabolomics data',
                                             text=SAVE, args=[A('galaxy_name'),
                                                              A('galaxy_data_id'),
                                                              A('galaxy_history_id'),

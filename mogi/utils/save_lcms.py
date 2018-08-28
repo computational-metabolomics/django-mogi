@@ -55,6 +55,11 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
 
 
 def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id, galaxy_history_id, investigation_name, celery_obj):
+    if celery_obj:
+        celery_obj.update_state(state='RUNNING',
+                                meta={'current': 0.1, 'total': 100,
+                                      'status': 'Getting data from Galaxy instance')
+
     user = User.objects.get(pk=user_id)
 
     get_history_status(user)
