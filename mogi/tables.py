@@ -79,6 +79,8 @@ class HistoryMogiDataTable(HistoryDataTable):
     mogi_create = tables.LinkColumn('history_mogi_data_save', verbose_name='Save metabolomics data',
                                             text=SAVE, args=[A('history_internal_id'), A('id')])
 
+
+
     def get_column_default_show(self):
         self.column_default_show = ['galaxy_instance', 'name', 'data_type', 'create_time', 'download_url', 'mogi_create']
         return super(HistoryDataTable, self).get_column_default_show()
@@ -185,9 +187,12 @@ class CAnnotationMogiTable(ColumnShiftTable):
 
 
 class IncomingGalaxyDataTable(ColumnShiftTable):
-    mogi_create = tables.LinkColumn('history_mogi_data_from_rest_save', verbose_name='Save metabolomics data',
-                                            text=SAVE, args=[A('galaxy_name'), A('galaxy_data_id'), A('galaxy_history_id')])
-
+    mogi_create = tables.LinkColumn('save_lcms_from_from_rest', verbose_name='Save metabolomics data2',
+                                            text=SAVE, args=[A('galaxy_name'),
+                                                             A('galaxy_data_id'),
+                                                             A('galaxy_history_id'),
+                                                             A('investigation_name')]
+                                     )
 
     class Meta:
         attrs = {'class': 'paleblue'}

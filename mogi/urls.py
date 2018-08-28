@@ -44,4 +44,6 @@ urlpatterns = [
     url(r'^incoming_galaxy_data_list/$', views.IncomingGalaxyDataListView.as_view(), name='incoming_galaxy_data_list'),
     url(r'^history_mogi_data_from_rest_save/(?P<galaxy_name>\w+)/(?P<galaxy_data_id>\w+)/(?P<galaxy_history_id>\w+)/$',
         views.HistoryDataMogiFromRestCreateView.as_view(), name='history_mogi_data_from_rest_save'),
+    url(r'^save_lcms_from_from_rest/(?P<galaxy_name>[-\w]+)/(?P<galaxy_data_id>\w+)/(?P<galaxy_history_id>\w+)/(?P<investigation_name>[-\w]+)/$',
+        views.SaveLcmsFromFromRest.as_view(), name='save_lcms_from_from_rest'),
 ]

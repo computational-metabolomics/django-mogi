@@ -116,7 +116,6 @@ class ISAWorkflowListView(WorkflowListView):
 ########################################################################################################################
 class HistoryDataMogiListView(LoginRequiredMixin, View):
 
-
     def get(self, request, *args, **kwargs):
         data = get_history_data(self.kwargs['pk'], request.user, data_type=['sqlite'])
 
@@ -177,6 +176,26 @@ class HistoryDataMogiFromRestCreateView(HistoryDataMogiCreateView):
         internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
 
         return history_data_save_form(self.request.user, internal_h[0].id, galaxy_data_id, history_data_obj)
+
+
+class SaveLcmsFromFromRest(LoginRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+
+        galaxy_name = self.kwargs.get('galaxy_name')
+        galaxy_data_id = self.kwargs.get('galaxy_data_id')
+        galaxy_history_id = self.kwargs.get('galaxy_history_id')
+        investigation_name = self.kwargs.get('investigation_name')
+
+        result = save_lcms_mogi.delay(request.user.id,
+                                      galaxy_name,
+                                      galaxy_data_id,
+                                      galaxy_history_id,
+                                      investigation_name)
+
+        self.request.session['result'] = result.id
+        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
+
 
 
 

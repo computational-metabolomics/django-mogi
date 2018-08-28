@@ -121,6 +121,7 @@ class IncomingGalaxyData(models.Model):
     galaxy_history_id = models.TextField(max_length=100)
     galaxy_history_name = models.TextField(max_length=100, null=True, blank=True)
     other_details = models.TextField(max_length=100, null=True, blank=True)
+    investigation_name = models.TextField(max_length=100)
 
     def __str__(self):              # __unicode__ on Python 2
         return self.galaxy_data_id

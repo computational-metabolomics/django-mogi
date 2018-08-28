@@ -1,6 +1,12 @@
+from django.contrib.auth.models import User
+
 from mbrowse.utils.save_lcms import LcmsDataTransfer
-from mogi.models import CPeakGroupMetaMOGI, CAnnotationMOGI
-from misa.models import Assay, AssayRun, AssayDetail
+from mogi.models import CPeakGroupMetaMOGI, CAnnotationMOGI, HistoryDataMOGI
+from misa.models import Assay, AssayRun, AssayDetail, Investigation
+from galaxy.models import History
+
+from mogi.forms import HistoryMogiDataForm
+from galaxy.utils.history_actions import get_history_status, history_data_save_form, init_history_data_save_form
 
 class LcmsDataTransferMOGI(LcmsDataTransfer):
     cpeakgroupmeta_class = CPeakGroupMetaMOGI
@@ -47,3 +53,33 @@ class LcmsDataTransferMOGI(LcmsDataTransfer):
 
         return cpgm
 
+
+def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id, galaxy_history_id, investigation_name, celery_obj):
+    user = User.objects.get(pk=user_id)
+
+    get_history_status(user)
+
+    internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
+
+    if not internal_h:
+        error_msg = 'No data available please check galaxy connection'
+        print(error_msg)
+        if celery_obj:
+            celery_obj.update_state(state='FAILED', meta={'current': 0, 'total': 100, 'status': error_msg})
+        return 0, error_msg
+
+    i_qs = Investigation.objects.filter(slug=investigation_name)
+
+    if not i_qs:
+        error_msg = 'No investigation with name {}'.format(investigation_name)
+        print(error_msg)
+        if celery_obj:
+            celery_obj.update_state(state='FAILED', meta={'current': 0, 'total': 100, 'status': error_msg})
+        return 0, error_msg
+
+    hdm = HistoryDataMOGI(investigation = i_qs[0], history=internal_h[0])
+
+    print(hdm)
+    hdm = history_data_save_form(user, internal_h[0].id, galaxy_data_id, hdm)
+
+    return hdm

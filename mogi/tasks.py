@@ -5,7 +5,7 @@ from celery import shared_task
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 from galaxy.models import FilesToGalaxyDataLibraryParam
 from mbrowse.models import MFile, MetabInputData, CAnnotation
-from mogi.utils.save_lcms import LcmsDataTransferMOGI
+from mogi.utils.save_lcms import LcmsDataTransferMOGI, get_data_from_galaxy
 from mogi.models import HistoryDataMOGI, CAnnotationMOGI
 from gfiles.models import TrackTasks
 from django.urls import reverse
@@ -34,9 +34,49 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
 
 
 
+@shared_task(bind=True)
+def save_lcms_mogi(self, userid, galaxy_name, galaxy_data_id, galaxy_history_id, investigation_name):
+    ###################
+    # Save task
+    ###################
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='LC-MSMS data upload', user_id=userid)
+    tt.save()
+
+    ####################
+    # Perform operation
+    ####################
+    hdm = get_data_from_galaxy(userid, galaxy_name, galaxy_data_id, galaxy_history_id, investigation_name, self)
+
+    if not hdm:
+        tt.result = reverse('cpeakgroupmeta_summary_mogi')
+        tt.state = 'FAILURE'
+        tt.save()
+        return 0
+
+    mfiles = MFile.objects.filter(run__assayrun__assaydetail__assay__study__investigation=hdm.investigation.pk)
+    mfiles_ids = [m.id for m in mfiles]
+    md = MetabInputData(gfile_id=hdm.genericfile_ptr_id)
+    md.save()
+    lcms_data_transfer = LcmsDataTransferMOGI(md.id, mfiles_ids)
+    lcms_data_transfer.historydatamogi = hdm
+
+    if not lcms_data_transfer.transfer(celery_obj=self):
+        # something wen't wrong don't perform the remaining analysis
+        return 0
+
+    ####################
+    # Save data
+    ####################
+    tt.result = reverse('cpeakgroupmeta_summary_mogi')
+    tt.state = 'SUCCESS'
+    tt.save()
+
+
+
+
 
 @shared_task(bind=True)
-def save_lcms_mogi(self, hdm_id, userid):
+def save_lcms_mogiOLD(self, hdm_id, userid):
     ###################
     # Save task
     ###################
