@@ -1,9 +1,11 @@
 {% extends "django_sb_admin/base.html" %}
 {% load static %}
-
+{% load bootstrap3 %}
 {% load staticfiles %}
 
 {% block sb_admin_css %}
+
+    {% bootstrap_css %}
     <link href="{% static "css/sb-admin.css"%}" rel="stylesheet">
     <link href="{% static 'css/mogi.css' %}" rel="stylesheet">
 

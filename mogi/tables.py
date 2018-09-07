@@ -31,8 +31,8 @@ class InvestigationTableUpload(ColumnShiftTable):
 
     class Meta:
         model = Investigation
-        attrs = {'class': 'paleblue'}
-        template = 'django_tables2/bootstrap.html'
+
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
         fields = ('id','name','description', 'details')
 
 
@@ -48,7 +48,7 @@ class WorkflowTableISA(ColumnShiftTable):
     class Meta:
 
         model = Workflow
-        attrs = {'class': 'paleblue'}
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
         template = 'django_tables2/bootsrap.html'
 
 
@@ -64,9 +64,7 @@ class HistoryMogiTable(HistoryTable):
         sequence = ( 'id', 'galaxyinstancetracking', 'name', 'update_time', 'empty', 'failed_metadata', 'new', 'ok', 'paused', 'error',
                      'queued', 'setting_metadata', 'upload', 'running', 'estimated_progress', 'galaxy_id', 'history_data_bioblend_list',
                      'history_mogi_data', 'check')
-        attrs = {
-            ' class ': 'paleblue',
-        }
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
         # running_tasks_details = tables.Column()
         order_by = ('-update_time',)
 
@@ -86,7 +84,7 @@ class HistoryMogiDataTable(HistoryDataTable):
         return super(HistoryDataTable, self).get_column_default_show()
 
     class Meta:
-        attrs = {'class': 'paleblue'}
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
         template = 'django_tables2/bootstrap.html'
 
 #
@@ -104,7 +102,7 @@ class CPeakGroupMetaMogiTable(ColumnShiftTable):
 
     class Meta:
         model = CPeakGroupMetaMOGI
-        attrs = {'class': 'paleblue'}
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
         fields = ('id', 'date', 'metabinputdata', 'filename', 'investigation', 'study', 'assay', 'polarity', 'c_peak_group_table')
 
         template = 'django_tables2/bootstrap.html'
@@ -183,8 +181,8 @@ class CAnnotationMogiTable(ColumnShiftTable):
     #     return super(HistoryDataTable, self).get_column_default_show()
     #
     class Meta:
-        attrs = {'class': 'paleblue'}
-        template = 'django_tables2/bootstrap.html'
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+
         model = CAnnotationMOGI
 
 
@@ -197,8 +195,8 @@ class IncomingGalaxyDataTable(ColumnShiftTable):
                                      )
 
     class Meta:
-        attrs = {'class': 'paleblue'}
-        template = 'django_tables2/bootstrap.html'
+        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+
         model = IncomingGalaxyData
 
 #
