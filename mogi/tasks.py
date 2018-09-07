@@ -91,6 +91,13 @@ class DownloadAnnotationsMogi(DownloadAnnotations):
     annotation_model_class = CAnnotationMOGI
     annotation_table_class = CAnnotationMogiTable
 
+    def get_items(self, cann_down):
+        if cann_down.rank:
+            canns = self.annotation_model_class.objects.filter(cannotation__rank__lte=cann_down.rank)
+        else:
+            canns = self.annotation_model_class.objects.all()
+
+        return canns
 
 
 @shared_task(bind=True)
