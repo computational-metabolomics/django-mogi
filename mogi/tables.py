@@ -105,7 +105,7 @@ class CPeakGroupMetaMogiTable(ColumnShiftTable):
     class Meta:
         model = CPeakGroupMetaMOGI
         attrs = {'class': 'paleblue'}
-        fields = ('id', 'filename', 'investigation', 'study', 'assay', 'c_peak_group_table')
+        fields = ('id', 'date', 'metabinputdata', 'filename', 'investigation', 'study', 'assay', 'polarity', 'c_peak_group_table')
 
         template = 'django_tables2/bootstrap.html'
 
@@ -145,6 +145,8 @@ class CAnnotationMogiTable(ColumnShiftTable):
 
     assay = tables.Column(accessor='assay_names',
                                    verbose_name='Assay')
+
+    polarity = tables.Column(accessor='cannotation.cpeakgroup.cpeakgroupmeta.polarity', verbose_name='Polarity')
 
     galaxy_history_name = tables.Column(accessor='galaxy_history_name', verbose_name='Galaxy history)')
     galaxy_history_data_name = tables.Column(accessor='galaxy_history_data_name', verbose_name='Galaxy history (data)')

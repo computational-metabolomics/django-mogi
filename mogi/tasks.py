@@ -10,6 +10,7 @@ from django.urls import reverse
 from mbrowse.utils.download_annotations import DownloadAnnotations
 
 from mogi.utils.save_lcms import LcmsDataTransferMOGI, get_data_from_galaxy
+
 from mogi.models import HistoryDataMOGI, CAnnotationMOGI
 from mogi.tables import CAnnotationMogiTable
 
@@ -102,7 +103,7 @@ def download_cannotations_mogi_task(self, pk, userid):
     tt.save()
 
     # perform function
-    dam = DownloadAnnotationMogi()
+    dam = DownloadAnnotationsMogi()
     dam.download_cannotations(pk, self)
 
 
