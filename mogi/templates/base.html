@@ -5,11 +5,13 @@
 
 {% block sb_admin_css %}
 
-    {% bootstrap_css %}
-    <link href="{% static "css/sb-admin.css"%}" rel="stylesheet">
-    <link href="{% static 'css/mogi.css' %}" rel="stylesheet">
-
+{% bootstrap_css %}
+<link href="{% static "css/sb-admin.css"%}" rel="stylesheet">
+<link href="{% static 'css/mogi.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
 {% endblock sb_admin_css %}
+
+
 
 {% block sb_admin_fonts_css %}
     <link rel="stylesheet" href="{% static 'django_tables2/themes/paleblue/css/screen.css' %}" />

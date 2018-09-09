@@ -10,14 +10,8 @@ from gfiles.utils.icons import EYE, DOWN, PLAY, SAVE
 from mbrowse.models import CAnnotation
 from django_tables2_column_shifter.tables import ColumnShiftTable
 from django.utils.text import slugify
-# class InvestigationTableUpload(InvestigationTable):
-#     details = tables.LinkColumn('idetail', text='details', args=[A('id')])
-#     check = tables.CheckBoxColumn(accessor="name",
-#                                            attrs={
-#                                                "th__input": {"onclick": "toggle(this)"},
-#                                                "td__input": {"onclick": "addfile(this)"}},
-#                                            )
 
+TABLE_CLASS = "mogi table-bordered table-striped table-condensed table-hover"
 
 
 class InvestigationTableUpload(ColumnShiftTable):
@@ -32,7 +26,7 @@ class InvestigationTableUpload(ColumnShiftTable):
     class Meta:
         model = Investigation
 
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+        attrs = {"class": TABLE_CLASS}
         fields = ('id','name','description', 'details')
 
 
@@ -48,8 +42,8 @@ class WorkflowTableISA(ColumnShiftTable):
     class Meta:
 
         model = Workflow
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
-        template = 'django_tables2/bootsrap.html'
+        attrs = {"class": TABLE_CLASS}
+
 
 
 class HistoryMogiTable(HistoryTable):
@@ -64,11 +58,11 @@ class HistoryMogiTable(HistoryTable):
         sequence = ( 'id', 'galaxyinstancetracking', 'name', 'update_time', 'empty', 'failed_metadata', 'new', 'ok', 'paused', 'error',
                      'queued', 'setting_metadata', 'upload', 'running', 'estimated_progress', 'galaxy_id', 'history_data_bioblend_list',
                      'history_mogi_data', 'check')
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+        attrs = {"class": TABLE_CLASS}
         # running_tasks_details = tables.Column()
         order_by = ('-update_time',)
 
-        template = 'django_tables2/bootstrap.html'
+
 
 
 
@@ -84,15 +78,14 @@ class HistoryMogiDataTable(HistoryDataTable):
         return super(HistoryDataTable, self).get_column_default_show()
 
     class Meta:
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
-        template = 'django_tables2/bootstrap.html'
+        attrs = {"class": TABLE_CLASS}
 
 #
 class CPeakGroupMetaMogiTable(ColumnShiftTable):
 
 
 
-    filename = tables.Column(accessor='filename', verbose_name='Input Filename')
+    filename = tables.Column(accessor='filename', verbose_name='Input Filename', orderable=True, attrs={'test':'test'})
     investigation = tables.Column(accessor='historydatamogi.investigation.name', verbose_name='Investigation')
     study = tables.Column(accessor='study_names', verbose_name='Study')
     assay = tables.Column(accessor='assay_names')
@@ -100,7 +93,7 @@ class CPeakGroupMetaMogiTable(ColumnShiftTable):
 
     class Meta:
         model = CPeakGroupMetaMOGI
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+        attrs = {"class": TABLE_CLASS}
         fields = ('id', 'date', 'metabinputdata', 'filename', 'investigation', 'study', 'assay', 'polarity', 'c_peak_group_table')
 
         template = 'django_tables2/bootstrap.html'
@@ -179,7 +172,7 @@ class CAnnotationMogiTable(ColumnShiftTable):
     #     return super(HistoryDataTable, self).get_column_default_show()
     #
     class Meta:
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
+        attrs = {"class": TABLE_CLASS}
 
         model = CAnnotationMOGI
 
@@ -193,8 +186,7 @@ class IncomingGalaxyDataTable(ColumnShiftTable):
                                      )
 
     class Meta:
-        attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }
-
+        attrs = {"class": TABLE_CLASS}
         model = IncomingGalaxyData
 
 #
