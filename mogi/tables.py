@@ -98,8 +98,6 @@ class CPeakGroupMetaMogiTable(ColumnShiftTable):
     assay = tables.Column(accessor='assay_names')
     c_peak_group_table = tables.LinkColumn('cpeakgroup_summary', verbose_name='View grouped peaklist', text=EYE, args=[A('id')])
 
-
-
     class Meta:
         model = CPeakGroupMetaMOGI
         attrs = {"class": "table table-bordered table-striped table-condensed table-hover", }

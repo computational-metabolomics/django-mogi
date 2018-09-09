@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import os
 
 from django.db import models
-
+from django.utils.functional import cached_property
 
 from galaxy.models import GalaxyInstanceTracking, FilesToGalaxyDataLibraryParam, HistoryData
 from misa.models import Investigation, Assay, Study
@@ -37,20 +37,20 @@ class CPeakGroupMetaMOGI(CPeakGroupMeta):
     historydatamogi = models.ForeignKey(HistoryDataMOGI, on_delete=models.CASCADE)
     assay = models.ManyToManyField(Assay)
 
-    @property
+    @cached_property
     def assay_names(self):
         return ', '.join(l.name for l in self.assay.all())
 
 
-    @property
+    @cached_property
     def study_names(self):
         return ', '.join(l['study__name'] for l in self.assay.all().values('study__name'))
 
-    @property
+    @cached_property
     def filename(self):
         return os.path.basename(self.metabinputdata.gfile.data_file.name)
 
-    @property
+    @cached_property
     def filepath(self):
         return self.metabinputdata.gfile.data_file
 

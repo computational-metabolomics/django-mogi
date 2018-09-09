@@ -212,6 +212,12 @@ class CPeakGroupMetaListMogiView(CPeakGroupMetaListView):
     table_class =CPeakGroupMetaMogiTable
     model = CPeakGroupMetaMOGI
 
+    def get_queryset(self):
+        # To get django-tables2 to play nicely with properties need tot trun queryset into list!
+        # https://stackoverflow.com/questions/26985132/django-tables2-how-to-order-by-accessor
+        qs = super(CPeakGroupMetaListMogiView, self).get_queryset()
+        return list(qs)
+
 
 class CAnnotationListAllMogiView(CAnnotationListAllView):
     table_class = CAnnotationMogiTable
