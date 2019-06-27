@@ -65,6 +65,10 @@ def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id, galaxy_history_id
 
     internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
 
+    print(galaxy_history_id)
+    print(investigation_name)
+    print(internal_h)
+
     if not internal_h:
         error_msg = 'No data available please check galaxy connection'
         print(error_msg)

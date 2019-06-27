@@ -254,14 +254,7 @@ def index(request):
 
     summary_d['workflow_nm'] = len(Workflow.objects.all())
 
-
-    summary_d['ann_nm'] = len(CAnnotation.objects.filter(Q(spectral_matching_average_score__gt=0.6) |
-                                                         Q(ms1_average_score__gt=0.0) |
-                                                         Q(metfrag_average_score__gt=0.0) |
-                                                         Q(sirius_csifingerid_average_score__gt=0.0) |
-                                                         Q(mzcloud_average_score__gt=0.6)
-                                                         ).values('cpeakgroup').distinct())
-
+    summary_d['ann_nm'] = len(CAnnotation.objects.filter(Q(weighted_score__gt=0.3)).values('cpeakgroup').distinct())
 
     return render(request, 'gfiles/index.html', summary_d)
 

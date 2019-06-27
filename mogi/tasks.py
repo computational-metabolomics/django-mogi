@@ -50,6 +50,8 @@ def save_lcms_mogi(self, userid, galaxy_name, galaxy_data_id, galaxy_history_id,
     ####################
     hdm = get_data_from_galaxy(userid, galaxy_name, galaxy_data_id, galaxy_history_id, investigation_name, self)
 
+    print(hdm)
+
     if not hdm:
         tt.result = reverse('cpeakgroupmeta_summary_mogi')
         tt.state = 'FAILURE'
