@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'django>=1.11.15*',
+        'django>=1.11.15',
         'django-galaxy',
         'django-misa',
     ],
