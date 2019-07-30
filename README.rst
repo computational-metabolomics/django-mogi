@@ -1,6 +1,6 @@
-=====
+==========
 django-mogi
-=====
+==========
 
 |Build Status (Travis)| |Py versions|
 
