@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block sb_admin_title %}Account E-mails{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+/ Account E-mails </i></a>
+
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %}{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Account E-mails{% endblock panel_title %}
+
+{% block content %}
+    <h2>Current email address for this account</h2>
+{% if user.emailaddress_set.all %}
+
+
+<form action="{% url 'account_email' %}" class="email_list" method="post">
+{% csrf_token %}
+<fieldset class="blockLabels">
+
+  {% for emailaddress in user.emailaddress_set.all %}
+<div class="ctrlHolder">
+      <label for="email_radio_{{forloop.counter}}" class="{% if emailaddress.primary %}primary_email{%endif%}">
+
+      <input id="email_radio_{{forloop.counter}}" type="radio" name="email" {% if emailaddress.primary or user.emailaddress_set.count == 1 %}checked="checked"{%endif %} value="{{emailaddress.email}}"/>
+
+{{ emailaddress.email }}
+    {% if emailaddress.verified %}
+    <span class="verified">Verified</span>
+    {% else %}
+    <span class="unverified">Unverified</span>
+    {% endif %}
+      {% if emailaddress.primary %}<span class="primary">Primary</span>{% endif %}
+</label>
+</div>
+  {% endfor %}
+
+<div class="buttonHolder">
+      <button class="secondaryAction" type="submit" name="action_primary" >Make Primary</button>
+      <button class="secondaryAction" type="submit" name="action_send" >Re-send Verification</button>
+      <button class="primaryAction" type="submit" name="action_remove" >Remove</button>
+</div>
+
+</fieldset>
+</form>
+
+{% else %}
+<p><strong> Warning:</strong>You currently do not have any e-mail address set up. You should really add an e-mail address so you can receive notifications, reset your password, etc.</p>
+
+{% endif %}
+
+    <h2>Add another email address to your account</h2>
+
+    <form method="post" action="{% url 'account_email' %}" class="add_email">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button name="action_add" type="submit">Add E-mail</button>
+    </form>
+
+
+{% endblock content %}
+
+
+
+
+<script type="text/javascript">
+(function() {
+  var message = "Do you really want to remove the selected e-mail address?";
+  var actions = document.getElementsByName('action_remove');
+  if (actions.length) {
+    actions[0].addEventListener("click", function(e) {
+      if (! confirm(message)) {
+        e.preventDefault();
+      }
+    });
+  }
+})();
+</script>
+

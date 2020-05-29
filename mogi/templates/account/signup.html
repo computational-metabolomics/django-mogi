@@ -1,0 +1,14 @@
+{% extends 'gfiles/simple_form.html' %}
+{% load static %}
+{% load socialaccount %}
+{% load account %}
+{% block sb_admin_title %}Sign Up {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a> {% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / Sign Up {% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Sign Up{% endblock panel_title %}#
+{% block preamble %}
+
+<p>Already have an account? Then please sign in with <a href="{{ login_url }}">your email</a> or with a<a href="{% provider_login_url 'google' %}"> google account</a></li>
+
+{% endblock preamble %}

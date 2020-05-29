@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from mogi.models import IncomingGalaxyData
+from mogi.models.models_galaxy import IncomingGalaxyData
 
 
 class IncomingGalaxyDataSerializer(serializers.HyperlinkedModelSerializer):

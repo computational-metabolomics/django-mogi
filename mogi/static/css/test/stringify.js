@@ -1,5 +1,5 @@
-var stringify = require('../').stringify;
-var parse = require('../').parse;
+var stringify = require('../index').stringify;
+var parse = require('../index').parse;
 var path = require('path');
 var read = require('fs').readFileSync;
 var SourceMapConsumer = require('source-map').SourceMapConsumer;

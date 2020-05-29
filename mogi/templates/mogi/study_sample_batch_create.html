@@ -1,0 +1,19 @@
+{% extends 'gfiles/simple_form.html' %}
+{% load static %}
+{% block sb_admin_title %}Batch Study Sample Create{% endblock sb_admin_title %}
+{% block sb_admin_subheading %}{% endblock sb_admin_subheading %}
+
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "ilist" %}"></i> ISA Summary </a>
+    / <a href="{% url "ssam_list" %}"></i> Study Samples </a>
+{% endblock sb_admin_breadcrumb %}
+
+{% block sb_admin_breadcrumb_active %} / Batch Study Sample Create {% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}File upload{% endblock panel_title %}
+
+
+{% block sb_admin_custom_js %}
+    <script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>#}
+    {{ form.media }}
+{% endblock sb_admin_custom_js %}

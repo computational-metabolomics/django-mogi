@@ -1,0 +1,16 @@
+{% extends 'gfiles/single_panel.html' %}
+{% load static %}
+{% block sb_admin_title %}Upload Files to Assay{% endblock sb_admin_title %}
+{% block sb_admin_subheading %}{% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "ilist" %}"></i> ISA Summary </a>
+    / <a href="{% url "ilist" %}"></i> ISA Project Details </a>
+{% endblock sb_admin_breadcrumb %}
+
+{% block sb_admin_breadcrumb_active %} / Upload Files to Assay {% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}File upload{% endblock panel_title %}
+
+{% block panel_body %}
+    {% include "gfiles/zip_and_dir_file_select.html" %}
+{% endblock panel_body %}

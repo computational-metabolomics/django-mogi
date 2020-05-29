@@ -11,14 +11,12 @@ Further documentation available on `ReadTheDocs <https://mogi.readthedocs.io/en/
 Quick start
 -----------
 
-1. Add "mogi" and django application dependencies to your INSTALLED_APPS setting like this (mogi should come before gfiles, galaxy, mbrowse and misa)::
+1. Add "mogi" and django application dependencies to your INSTALLED_APPS setting like this (mogi should come before galaxy and gfiles)::
 
 
     INSTALLED_APPS = [
         ...
         'mogi',
-        'misa',
-        'mbrowse',
         'galaxy',
         'gfiles',
 

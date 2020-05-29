@@ -1,0 +1,22 @@
+import os
+import csv
+import django
+import time
+from django.db.models import Max
+
+#  you have to set the correct path to you settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mogi_site.settings")
+django.setup()
+from mogi.models.models_compounds import Compound
+from mogi.models.models_annotations import CompoundAnnotationSummary, CombinedAnnotation
+
+def update_compounds():
+    
+    for cmp in CompoundAnnotationSummary.objects.all():
+        CompoundAnnotation.objects.filter(compound=cmp.compound,
+                                          combinedpeak__metabinputdata
+                                          ).
+    
+    return dc
+
+

@@ -1,4 +1,4 @@
-var parse = require('../').parse;
+var parse = require('../index').parse;
 var should = require('should');
 
 describe('parse(str)', function() {
