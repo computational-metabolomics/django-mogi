@@ -1,0 +1,30 @@
+{% extends 'gfiles/simple_form.html' %}
+{% load static %}
+{% block sb_admin_title %}
+{% if investigation   %}
+    Update an Investigation
+        {% else %}
+    Create an Investigation
+{% endif %}
+{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "ilist" %}"></i> ISA Summary </a>
+{% endblock sb_admin_breadcrumb %}
+
+
+{% block sb_admin_breadcrumb_active %}
+    {% if investigation   %}
+        / Update an Investigation
+    {% else %}
+        / Create an Investigation
+    {% endif %}
+
+{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}{% endblock panel_title %}
+
+
+
+

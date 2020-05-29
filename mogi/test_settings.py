@@ -1,10 +1,14 @@
 import os
 SECRET_KEY = 'fake-key'
+
+# Use nose to run all tests
+
+# Tell nose to measure coverage on the 'foo' and 'bar' apps
+
+
 INSTALLED_APPS = [
 
     'mogi',
-    'misa',
-    'mbrowse',
     'galaxy',
     'gfiles',
 
@@ -18,6 +22,13 @@ INSTALLED_APPS = [
     'dal_select2',
 
 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
+    'allauth.socialaccount.providers.google',
+
+    'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -28,19 +39,19 @@ INSTALLED_APPS = [
 DEBUG = True
 
 
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
+AUTH_USER_MODEL = 'gfiles.User'
 
 
 DATABASES = {
@@ -52,25 +63,41 @@ DATABASES = {
 
 
 
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 
 PROJECT_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), ".."),
+    os.path.join(os.path.dirname(__file__), "../mogi"),
 )
 
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 STATIC_URL = '/static/'
 
-ROOT_URLCONF = 'test_site_urls'
+ROOT_URLCONF = 'mogi_site.urls'
 
 LOGIN_REDIRECT_URL = 'index'
 LOGIN_URL = '/login/'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media_test')
+MEDIA_URL = os.path.join(BASE_DIR, 'media')
+
+
+EXTERNAL_DATA_ROOTS = {'TEST': {
+                                 'path': os.path.join(BASE_DIR, 'mogi', 'tests', 'data'),
+                                 'user_dirs': True,
+                                 'help_text': 'test data store',
+                                 'filepathfield': False
+                                                # if false will use charfield path, if true filepathfield  will look
+                                                # recursively in a selected folder but will be to slow for complicated
+                                                # folder structure
+                       }
+}
 
 TEMPLATES = [
     {
@@ -89,3 +116,11 @@ TEMPLATES = [
         },
     },
 ]
+
+SITE_ID = 1
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_UNIQUE_EMAIL = True

@@ -9,11 +9,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-mogi',
-    version='0.0.1',
+    version='0.0.2',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'django>=1.11.15*',
+        'django>=1.11.15',
         'django-galaxy',
         'django-misa',
     ],

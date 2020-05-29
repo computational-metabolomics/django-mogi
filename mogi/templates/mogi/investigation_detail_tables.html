@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block sb_admin_title %}ISA Project Details:{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small> {{ investigation.name }} </small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    /
+    <a href="{% url "ilist" %}"></i> ISA Summary </a>
+
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / ISA Project Details {% endblock sb_admin_breadcrumb_active %}
+
+{% block sb_admin_custom_js %}
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="{% static 'gfiles/show_hide_filters.js' %}"></script>
+    <script src="{% static 'gfiles/table_check.js' %}"></script>
+    <script type="text/javascript" src="{% static "django_tables2_column_shifter/js/django_tables2_column_shifter.min.js" %}"></script>
+{% endblock sb_admin_custom_js %}
+
+
+{% block content %}
+{% load render_table from django_tables2 %}
+{% load querystring from django_tables2 %}
+{% load bootstrap3 %}
+
+
+<p class="mb-0">
+    <table class="table table-bordered">
+        <thead>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Investigation id:</b></td>
+                <td>{{ investigation.pk }}</td>
+            </tr>
+            <tr>
+                <td><b>Name:</b></td>
+                <td>{{ investigation.name }}</td>
+            </tr>
+            <tr>
+                <td><b>Description:</b></td>
+                <td>{{ investigation.description |safe }}</td>
+            </tr>
+            </tbody>
+    </table>
+</p>
+
+{#<ul class="nav nav-tabs" id="myTab" role="tablist">#}
+{#        {% for s, table, filter, stable, sfilter in list1  %}#}
+{#        <li class="nav-item">#}
+{#        {% if forloop.counter0 == 0 %}#}
+{#           <a class="nav-link active" id="mogi-{{ s.id }}-tab" data-toggle="tab" role="tab" href="{{ s.id }}"#}
+{#               aria-controls="mogi-{{ s.id }}" aria-selected="true">{{ s.name }}</a>#}
+{#        {% else %}#}
+{#           <a class="nav-link" id="mogi-{{ s.id }}-tab" data-toggle="tab" role="tab" href="{{ s.id }}"#}
+{#               aria-controls="mogi-{{ s.id }}" aria-selected="false">{{ s.name }}</a>#}
+{#        {% endif %}#}
+{##}
+{#        </li>#}
+{#        {% endfor %}#}
+{#    </ul>#}
+
+{##}
+<ul class="nav nav-tabs">
+ {% for s, table, filter, stable, sfilter in list1  %}
+    <li class="nav-item">
+     {% if forloop.counter0 == 0 %}
+      <a class="nav-link active" aria-selected="true" data-toggle="tab" href="#{{ s.id  }}">{{ s.name }}</a>
+    {% else %}
+       <a class="nav-link" aria-selected="false" data-toggle="tab" href="#{{ s.id  }}">{{ s.name }}</a>
+    {% endif %}
+    </li>
+{% endfor %}
+</ul>
+
+
+
+  <!-- Tab panes -->
+    <div class="tab-content">
+        {% for s, table, filter, stable, sfilter in list2 %}
+            {% if forloop.counter0 == 0 %}
+                <div id="{{ s.id  }}" class="tab-pane active"><br>
+            {% else %}
+                <div id="{{ s.id  }}" class="tab-pane"><br>
+            {% endif %}
+                    <form name="filterform"  action="" method="get" class="form form-inline">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h3 class="panel-title"><b>Study - </b>  <span class="text-muted"> {{ s.name }}</span></h3>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="row" >
+                                            <div class="col-lg-8">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title"><b>Assays</b></h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="table-responsive">
+                                                            {% render_table table %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title">Filter assays</h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <form action="" method="get" class="form form-inline">
+                                                            {% bootstrap_form filter.form layout='inline' %}
+                                                            {% bootstrap_button 'filter' %}
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row" >
+                                            <div class="col-lg-8">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title"><b>Study samples</b></h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="table-responsive">
+                                                            {% render_table stable %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title">Filter samples</h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                    <form action="" method="get" class="form form-inline">
+                                                            {% bootstrap_form sfilter.form layout='inline' %}
+                                                            {% bootstrap_button 'filter' %}
+                                                    </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                            <div class="row" >
+                                                <div class="col-lg-12">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title"><b>Study details</b></h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <table class="table table-bordered">
+                                                            <thead>
+                                                            </thead>
+                                                            <tbody>
+                                                            <tr>
+                                                                <td><b>Study id:</b></td>
+                                                                <td>{{s.pk}}</td>
+                                                                <td><b>name:</b></td>
+                                                                <td>{{ s.name }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Description:</b></td>
+                                                                <td>{{ s.description |safe }}</td>
+                                                                <td><b>Grant number:</b></td>
+                                                                <td>{{ s.grant_number |safe }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Submission date:</b></td>
+                                                                <td>{{ s.submission_date |safe }}</td>
+                                                                <td><b>Public release date:</b></td>
+                                                                <td>{{ s.public_release_date |safe }}</td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                            <div class="row" >
+                                            <div class="col-lg-4">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h3 class="panel-title"><b>Operations</b></h3>
+                                                    </div>
+                                                    <div class="panel-body">
+                                                        <div class="list-group">
+                                                            <a href="{% url "acreate" %}" class="list-group-item">Create assay</a>
+                                                            <a href="{% url "ssam_create" %}" class="list-group-item">Create study samples</a>
+                                                            <a href="{% url "ssam_batch_create" %}" class="list-group-item">Batch create study samples</a>
+                                                            <a href="{% url "supdate" s.id %}" class="list-group-item">Update study details</a>
+                                                            <a href="{% url "sdelete" s.id %}" class="list-group-item">Delete study</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+
+
+
+{#<div class="tab-content" id="pills-tabContent">#}
+{#  {% for s, table, filter, stable, sfilter in list2 %}#}
+{#      <p>TEST {{ s.id }}</p>#}
+{#      <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">...</div>#}
+{#  <div class="tab-pane fade" id="mogi{{ s.id }}" role="tabpanel" aria-labelledby="mogi{{ s.id }}-tab">...</div>#}
+{#{% endfor %}#}
+{#</div>#}
+{# {% endfor %}#}
+{#</div>#}
+
+
+{% endblock %}

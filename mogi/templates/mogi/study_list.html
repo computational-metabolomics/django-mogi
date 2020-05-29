@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+	<div class="content container">
+            <div class="general">
+				<h1>View investigation</h1>
+
+                <ul>
+                    {% for i in object_list %}
+                        <li>{{ i.id }}</li>
+                        <li>{{ i.study }}</li>
+                        {% empty %}
+                        <li>No articles yet.</li>
+                    {% endfor %}
+                </ul>
+
+
+            </div>
+	</div>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+

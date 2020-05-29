@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
-var parse = require('../').parse;
-var stringify = require('../').stringify;
+var parse = require('../index').parse;
+var stringify = require('../index').stringify;
 
 var cases = fs.readdirSync(path.join(__dirname, 'cases'));
 cases.forEach(function(name) {

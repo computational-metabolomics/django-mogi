@@ -3,8 +3,8 @@
 
 var fs = require('fs');
 var path = require('path');
-var parse = require('./').parse;
-var stringify = require('./').stringify;
+var parse = require('./index').parse;
+var stringify = require('./index').stringify;
 
 var casesDir = path.join(__dirname, 'test', 'cases');
 var cases = fs.readdirSync(casesDir)

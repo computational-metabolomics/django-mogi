@@ -2,11 +2,13 @@
 {% load static %}
 {% load bootstrap3 %}
 {% load staticfiles %}
-
+{% load socialaccount %}
+{% load account %}
+{% user_display user %}
 {% block sb_admin_css %}
 
 {% bootstrap_css %}
-<link href="{% static "css/sb-admin.css"%}" rel="stylesheet">
+<link href="{% static "css/sb-admin.css" %}" rel="stylesheet">
 <link href="{% static 'css/mogi.css' %}" rel="stylesheet">
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
 {% endblock sb_admin_css %}
@@ -17,7 +19,7 @@
     <link rel="stylesheet" href="{% static 'django_tables2/themes/paleblue/css/screen.css' %}" />
     <link href="http://fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Slab" rel="stylesheet" type="text/css">
-    <link href="{% static "font-awesome/css/font-awesome.min.css"%}" rel="stylesheet" type="text/css">
+    <link href="{% static "font-awesome/css/font-awesome.min.css" %}" rel="stylesheet" type="text/css">
 {% endblock sb_admin_fonts_css %}
 
 {% block title %}MOGI{% endblock %}
@@ -33,11 +35,11 @@
     <ul class="nav navbar-right top-nav">
 
         <li class="dropdown">
-                    {% if messages %}
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="color:red" class="fa fa-bell"></i> <b class="caret"></b></a>
-                    {% else %}
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>
-                    {% endif %}
+{#                    {% if messages %}#}
+{#                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="color:red" class="fa fa-bell"></i> <b class="caret"></b></a>#}
+{#                    {% else %}#}
+{#                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>#}
+{#                    {% endif %}#}
 
                     <ul class="dropdown-menu alert-dropdown">
 
@@ -60,14 +62,24 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {% if user.username %}{{ user.username }}{% else %}Anonymous{% endif %} <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                             {% if user.is_authenticated %}
-                                <li><a href="#"><i class="fa fa-fw fa-user"></i> Profile</a></li>
-                                <li><a href="#"><i class="fa fa-fw fa-gear"></i> Settings</a></li>
+{#                                <li><a href="#"><i class="fa fa-fw fa-user"></i> Profile</a></li>#}
+{#                                <li><a href="#"><i class="fa fa-fw fa-gear"></i> Settings</a></li>#}
 
-                                <li class="divider"></li>
-                                <li><a href="{% url 'logout' %}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+{#                                <li class="divider"></li>#}
+                                <li><a href="{% url 'account_logout' %}"><span class="glyphicon
+                                glyphicon-log-out"></span> Logout</a></li>
+                                <li><a href="{% url 'account_change_password' %}"><span class="glyphicon
+                                glyphicon-lock"></span> Change password</a></li>
+                                <li><a href="{% url 'track_tasks' %}"><span class="glyphicon glyphicon-tasks"></span> track tasks</a></li>
+
                             {% else %}
-                                <li><a href="{% url 'register' %}"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
-                                <li><a href="{% url 'login' %}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                                <li><a href="{% url 'account_signup' %}"><span class="glyphicon
+                                glyphicon-user"></span> Sign Up</a></li>
+                                <li><a href="{% url 'account_login' %}"><span class="glyphicon
+                                glyphicon-log-in"></span> Login</a></li>
+                                <li><a href="{% provider_login_url 'google' %}"><span class="glyphicon
+                                glyphicon-log-in"></span> Login (google)</a></li>
+
                             {% endif %}
                     </ul>
                 </li>
@@ -129,40 +141,51 @@
                     </li>
 
                 <li {% if nav_active == "search" %}class="active"{% endif %}>
-                        <a href="javascript:;" data-toggle="collapse" data-target="#metab_drop"><i class="fa fa-fw fa-bar-chart-o"></i> Browse, View & Search <i class="fa fa-fw fa-caret-down"></i></a>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#metab_drop"><i class="fa fa-fw
+                        fa-bar-chart-o"></i> Data & Results <i class="fa fa-fw fa-caret-down"></i></a>
                         <ul id="metab_drop" class="collapse">
                             <li>
-                                <a href="{% url "general_summary" %}"> <i class="fa fa-fw fa-list-alt"></i> Summary</a>
+                                <a href="{% url "data_and_results_summary" %}"> <i class="fa fa-fw fa-list-alt"></i> Summary</a>
                             </li>
                             <li>
                                 <a href="javascript:;" data-toggle="collapse" data-target="#search_drop"><i class="fa fa-fw fa-search"></i>  Search <i class="fa fa-fw fa-caret-down"></i></a>
                                 <ul id="search_drop" class="collapse">
                                 <li>
+                                    <a href="{% url "search_mz" %}"> m/z search</a>
+                                </li>
+                                <li>
                                     <a href="{% url "search_frag" %}"> Fragmentation search</a>
                                 </li>
                                 <li>
-                                    <a href="{% url "search_mz" %}"> Search m/z</a>
+                                    <a href="#"> Compound mass search (todo)</a>
                                 </li>
                                 <li>
-                                    <a href="{% url "search_nm" %}"> Search neutral mass</a>
+                                    <a href="#"> Compound similarity search (todo)</a>
                                 </li>
                                 <li>
-                                    <a href="{% url "search_result_summary" %}"> Search Results Summary</a>
+                                    <a href="{% url "search_results" %}"> Search Results</a>
                                 </li>
-                            </ul>
+                                </ul>
                             </li>
                                 <li {% if nav_active == "browse" %}class="active"{% endif %}>
                         <a href="javascript:;" data-toggle="collapse" data-target="#browse_drop"><i class="fa fa-fw fa-align-left"></i>  Browse <i class="fa fa-fw fa-caret-down"></i></a>
                         <ul id="browse_drop" class="collapse">
                             <li>
-                                <a href="{% url "mfile_summary" %}"> Show all metabolomics files</a>
+                                <a href="{% url "mfile_summary" %}"> Show all metabolomics data files</a>
                             </li>
                             <li>
-                                <a href="{% url "cpeakgroupmeta_summary" %}"> Show LC-MS(/MS) datasets</a>
+                                <a href="{% url 'metabinputdata_summary' %}"> Show all datasets</a>
                             </li>
                             <li>
-                                <a href="#"> Show DI-MS(/MS) MSn datasets</a>
+                                <a href="{% url 'combinedpeak_summary_all' %}"> Show all peaks</a>
                             </li>
+                            <li>
+                                <a href="{% url 'combinedannotation_summary_all' %}"> Show all annotations</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'compounds' %}"> Show all compounds</a>
+                            </li>
+
                         </ul>
                     </li>
                             </ul>

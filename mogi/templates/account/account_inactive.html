@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block sb_admin_title %}Account Inactive {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+/ Account Inactive </i></a>
+
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %}{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Account Inactive{% endblock panel_title %}
+{% block content %}
+ <div class="general">
+     <p>This account is inactive.</p>
+ </div>
+{% endblock content %}

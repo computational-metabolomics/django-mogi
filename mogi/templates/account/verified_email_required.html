@@ -1,0 +1,20 @@
+{% extends 'gfiles/simple_form.html' %}
+{% load static %}
+{% block sb_admin_title %}Verify Your E-mail Address{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a> {% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / Verify Your E-mail Address{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Verify Your E-mail Address{% endblock panel_title %}
+{% block content %}
+
+<p>This part of the site requires us to verify that
+you are who you claim to be. For this purpose, we require that you
+verify ownership of your e-mail address. </p>
+
+<p>We have sent an e-mail to you for
+verification. Please click on the link inside this e-mail. Please
+contact us if you do not receive it within a few minutes</p>
+
+<p><strong>Note:</strong> you can still <a href="{{ email_url }}">change your e-mail address</a>.</p>
+
+{% endblock content %}

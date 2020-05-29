@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block sb_admin_title %}Confirm E-mail{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %} <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+/ Confirm E-mail</i></a>
+
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %}{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Confirm E-mail{% endblock panel_title %}
+
+{% block content %}
+{% load i18n %}
+{% load account %}
+
+
+{% if confirmation %}
+
+{% user_display confirmation.email_address.user as user_display %}
+
+<p>{% blocktrans with confirmation.email_address.email as email %}Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an e-mail address for user {{ user_display }}.{% endblocktrans %}</p>
+
+<form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+{% csrf_token %}
+    <button type="submit">{% trans 'Confirm' %}</button>
+</form>
+
+{% else %}
+
+{% url 'account_email' as email_url %}
+
+<p>{% blocktrans %}This e-mail confirmation link expired or is invalid. Please <a href="{{ email_url }}">issue a new e-mail confirmation request</a>.{% endblocktrans %}</p>
+
+{% endif %}
+
+
+
+{% endblock content %}
+

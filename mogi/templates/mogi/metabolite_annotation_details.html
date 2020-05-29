@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block sb_admin_custom_js %}
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="{% static 'gfiles/show_hide_filters.js' %}"></script>
+    <script type="text/javascript" src="{% static "django_tables2_column_shifter/js/django_tables2_column_shifter.min.js" %}"> </script>
+{% endblock sb_admin_custom_js %}
+
+
+{% block sb_admin_title %} Metabolite Annotation Details {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "data_and_results_summary" %}"> data & results summary</a>
+    / <a href="{% url "metabinputdata_summary" %}"> metabolomics analysis dataset summary</a>
+    / <a href="{% url "combinedpeak_summary" mid_id %}"> peak summary </a>
+    / <a href="{% url "canns" cp_id %}"> peak annotation (combined) - peak {{cp_id }}</a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / metabolite annotation details
+{% endblock sb_admin_breadcrumb_active %}
+
+{% block content %}
+    {% block preamble %}{% endblock preamble %}
+
+
+    {% load render_table from django_tables2 %}
+    {% load bootstrap3 %}
+    {% load querystring from django_tables2 %}
+
+    {% if graph %}
+        <div style="width:600;height:500">
+            {{ graph|safe }}
+        </div>
+    {% endif %}
+
+    {% block hidden_value %}{% endblock hidden_value %}
+    {% if filter %}
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel panel-default">
+
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{% block panel_title2 %}Filter{% endblock panel_title2 %}</h3>
+                    </div>
+
+                    <p>
+                        <button type="submit" href="#1" id="show_filter" onclick="return show_filters();">
+                        Show filters</button>
+                    </p>
+
+
+                    <div class="panel-body" id="filters" style="display: none;">
+                        <form name="form" method="get" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% include "gfiles/filter_table.html" %}
+                         </form>
+                    <p>
+                        <button type="submit" id="hide_filter" style="display: none;" onclick="return hide_filters();">
+                        Hide filters</button>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    {%  endif %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Annotation scores</h3>
+                </div>
+                <div class="panel-body">
+{#                    <p><a href="{% querystring '_export'='csv' %}">Export to CSV</a></p>#}
+                        <div class="table-responsive">
+                            {% load render_table from django_tables2 %}
+                            {% render_table table_scores %}
+                        </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Annotation details</h3>
+                </div>
+                <div class="panel-body">
+{#                    <p><a href="{% querystring '_export'='csv' %}">Export to CSV</a></p>#}
+                        <div class="table-responsive">
+                            {% load render_table from django_tables2 %}
+                            {% render_table table %}
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block postamble %}{% endblock postamble %}
+
+{% endblock content %}

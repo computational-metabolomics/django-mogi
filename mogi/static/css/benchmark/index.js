@@ -1,6 +1,6 @@
 
 var bytes = require('bytes');
-var parse = require('..').parse;
+var parse = require('../index').parse;
 var fs = require('fs');
 
 var small = fs.readFileSync('benchmark/small.css', 'utf8');

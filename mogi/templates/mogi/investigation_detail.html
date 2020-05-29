@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block sb_admin_title %}ISA Project Details{% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    /
+    <a href="{% url "ilist" %}"></i> ISA Summary </a>
+
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / ISA Project Details {% endblock sb_admin_breadcrumb_active %}
+
+
+{% block content %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><b>Investigation - </b> <span class="text-muted"> {{ object.name }}</span></h3>
+                </div>
+                <div class="panel-body">
+                    <p>id: {{ object.id }}</p>
+                    <p>{{ object.description |safe }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% for s in object.study_set.all %}
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><b>Study - </b>  <span class="text-muted"> {{ s.name }}</span></h3>
+                    </div>
+                    <div class="panel-body">
+
+                            <p>id: {{s.id}}</p>
+                            <p>name: {{ s.name }}</p>
+                            <p>{{ s.description |safe }}</p>
+
+                            {% if s.dmastudy %}
+                                <p>Type of study: DMA</p>
+                            {% else %}
+                                <p>Type of study: metabolomics</p>
+                            {% endif %}
+                    <hr>
+
+
+
+                            <h4><b>Assays</b></h4>
+                             <table class="table table-hover" id="form_table">
+                             <thead>
+                             <tr>
+                                <th></th>
+                                <th>Name</th>
+                                <th>Details</th>
+                                <th>Add files</th>
+                                <th>View & update assay files</th>
+                                <th>Delete Assay</th>
+                             </tr>
+                            </thead>
+                            <tbody>
+                            {% for a in s.assay_set.all %}
+
+                                <tr>
+                                    <td>{{ forloop.counter }} </td>
+                                    <td>{{ a.name }}</td>
+                                    <td><a href="{% url 'assaydetail_summary' assayid=a.id %}">View details</a> </td>
+                                    <td><a href="{% url 'upload_assay_data_files' assayid=a.id %}">Add files</a> </td>
+                                    <td><a href="{% url 'assayfile_summary' assayid=a.id  %}">View & update files</a></td>
+                                    <td><a href="{% url 'adelete' pk=a.id  %}">Delete</a></td>
+                                </tr>
+
+                            {% endfor %}
+                            </tbody>
+                            </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+
+
+
+{##}
+{##}
+{#{% extends 'base.html' %}#}
+{#{% block content %}#}
+{#	<div class="content container">#}
+{#            <div class="general">#}
+{#				<h1>ISA project summary</h1>#}
+{##}
+{#                <div class="row"><hr class = "line" /></div>#}
+{##}
+{#                        <h2>Investigation </h2>#}
+{#                        <h3>Details </h3>#}
+{#                        <p>id: {{ object.id }}</p>#}
+{#                        <p>name: {{ object.name }}</p>#}
+{##}
+{#                        <p>{{ object.description |safe }}</p>#}
+{##}
+{#                        <h2>Studies</h2>#}
+{##}
+{#                        {% for s in object.study_set.all %}#}
+{#                            <h3>Study {{ forloop.counter }} </h3>#}
+{#                            <h4>Details </h4>#}
+{#                            <p>id: {{s.id}}</p>#}
+{#                            <p>name: {{ s.name }}</p>#}
+{#                            <p>{{ s.description |safe }}</p>#}
+{##}
+{#                            {% if s.dmastudy %}#}
+{#                                <p>Type of study: DMA</p>#}
+{#                            {% else %}#}
+{#                                <p>Type of study: metabolomics</p>#}
+{#                            {% endif %}#}
+{#                            <h3>Assays</h3>#}
+{#                             <table class="table table-hover" id="form_table">#}
+{#                             <thead>#}
+{#                             <tr>#}
+{#                                <th></th>#}
+{#                                <th>Name</th>#}
+{#                                <th>Details</th>#}
+{#                                <th>Add files</th>#}
+{#                                <th>View & update assay files</th>#}
+{#                                <th>Delete Assay</th>#}
+{#                             </tr>#}
+{#                            </thead>#}
+{#                            <tbody >#}
+{#                            {% for a in s.assay_set.all %}#}
+{#                                <tr>#}
+{#                                    <td>{{ forloop.counter }} </td>#}
+{#                                    <td>{{ a.name }}</td>#}
+{#                                    <td><a href="{% url 'assaydetail_summary' assayid=a.id %}">View details</a> </td>#}
+{#                                    <td><a href="{% url 'upload_assay_data_files' assayid=a.id %}">Add files</a> </td>#}
+{#                                    <td><a href="{% url 'assayfile_summary' assayid=a.id  %}">View & update files</a></td>#}
+{#                                    <td><a href="{% url 'adelete' pk=a.id  %}">Delete</a></td>#}
+{#                                </tr>#}
+{##}
+{#                            {% endfor %}#}
+{#                            </tbody>#}
+{#                            </table>#}
+{##}
+{##}
+{#                            </ul>#}
+{#                        {% endfor %}#}
+{##}
+{##}
+{##}
+{##}
+{##}
+{#                <div class="row"><hr class = "line" /></div>#}
+{##}
+{#            </div>#}
+{#	</div>#}
+{#{% endblock %}#}
+{##}
+{##}
+{##}
+{##}
+{##}
+
+
+
+
+

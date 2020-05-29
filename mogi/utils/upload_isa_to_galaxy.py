@@ -7,6 +7,7 @@ import csv
 import sys
 from operator import itemgetter
 from django.core.files import File
+import bioblend
 from bioblend.galaxy.libraries import LibraryClient
 from bioblend.galaxy.folders import FoldersClient
 from bioblend.galaxy.client import ConnectionError
@@ -16,11 +17,12 @@ from django.conf import settings
 
 from galaxy.utils.galaxy_utils import create_library, get_gi_gu
 from galaxy.utils.upload_to_galaxy import add_filelist_datalib, link_files_in_galaxy
-from misa.models import Investigation, MISAFile
-from mbrowse.models import MFile
+from mogi.models.models_isa import Investigation, MISAFile, MFile
+from mogi.models.models_galaxy import ISAGalaxyTrack
+
 from ftplib import FTP, error_perm
 
-from mogi.models import ISAGalaxyTrack
+
 
 
 def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id, celery_obj=''):
@@ -51,13 +53,13 @@ def galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param, galaxy_pass, user_id
         print('ERROR CATCH', e)
         if celery_obj:
             celery_obj.update_state(state='FAILURE',
-                                    meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
+                             meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
         return 0
     except bioblend.ConnectionError as e:
         print('ERROR CATCH', e)
         if celery_obj:
             celery_obj.update_state(state='FAILURE',
-                                    meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
+                             meta={'current': 0.0, 'total': 100, 'status': 'Failed {}'.format(e)})
         return 0
 
 
@@ -74,8 +76,9 @@ def create_samplelist(user_id, igrp):
     with open(tmp_pth, 'w') as csvfile:
         writer = csv.writer(csvfile, delimiter='\t')
         writer.writerow(
-                ['prefix', 'sample_class', 'code_field', 'blank', 'sample_type', 'full_path', 'original_filename', 'investigation',
-                 'investigation_id', 'study', 'assay', 'fileid'])
+                ['prefix', 'sample_class', 'code_field', 'blank', 'sample_type', 'full_path',
+                 'original_filename', 'investigation', 'investigation_id',
+                 'study', 'assay', 'fileid'])
         for m in igrp:
             if m[nm['sampletype']].lower() == 'blank':
                 blank = 'yes'
@@ -109,18 +112,16 @@ def create_samplelist(user_id, igrp):
     misafile.data_file.save(fnm, File(open(tmp_pth)))
     misafile.save()
 
-    fullpth = os.path.join(settings.MEDIA_ROOT, misafile.data_file.path)
-    print(fullpth)
-    return fullpth, misafile.id
+    return misafile.id
 
 
 def get_namemap():
-    return  {'assay': 'run__assayrun__assaydetail__assay__name',
-             'study': 'run__assayrun__assaydetail__assay__study__name',
-             'investigation': 'run__assayrun__assaydetail__assay__study__investigation__name',
-             'investigation_id': 'run__assayrun__assaydetail__assay__study__investigation__id',
-             'sampletype': 'run__assayrun__assaydetail__studysample__sampletype__type',
-             'code_field': 'run__assayrun__assaydetail__code_field',
+    return  {'assay': 'run__assaydetail__assay__name',
+             'study': 'run__assaydetail__assay__study__name',
+             'investigation': 'run__assaydetail__assay__study__investigation__name',
+             'investigation_id': 'run__assaydetail__assay__study__investigation__id',
+             'sampletype': 'run__assaydetail__studysample__sampletype__type',
+             'code_field': 'run__assaydetail__code_field',
              'prefix': 'run__prefix',
              }
 
@@ -130,7 +131,7 @@ def get_mfile_qs(pks):
     name_map = get_namemap()
 
     mfiles = MFile.objects.filter(
-        run__assayrun__assaydetail__assay__study__investigation__id__in=pks
+        run__assaydetail__assay__study__investigation__id__in=pks
     ).values(
         name_map['assay'],
         name_map['study'],
@@ -163,21 +164,28 @@ def create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param
 
 
     for igrp in igrps:
-        print(igrp)
         # get the investigation name of the group, and create folder
         ifolder, sgrps = create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name_map)
-        samplelist_pth, misafile = create_samplelist(user_id, igrp)
 
-        save_to_galaxy([samplelist_pth], galaxy_isa_upload_param, lc, gu, gi, galaxy_pass,
-                                        lib['id'], ifolder['id'], 'samplelist', [{'id':misafile}])
+        # create samplelist (and create relevant misa file)
+        samplelist_misafile_id = create_samplelist(user_id, igrp)
+
+        # Upload all generic MISA files (including the one above we just created)
+        investigation_n = igrp[0][name_map['investigation']]
+
+        misa_files = MISAFile.objects.filter(
+            investigation__name=investigation_n
+        )
+
+        for misafile in misa_files:
+            save_to_galaxy([misafile], galaxy_isa_upload_param, lc, gu, gi, galaxy_pass,
+                           lib['id'], ifolder['id'], misafile.original_filename, True)
 
         for sgrp in sgrps:
-            print(sgrp)
             # get the study name of the group and create folder
             sfolder, agrps = create_study_folder(sgrp, lc, lib, name_map, ifolder)
 
             for agrp in agrps:
-                print(agrp)
 
                 study_n = agrp[0][name_map['study']]
                 investigation_n = agrp[0][name_map['investigation']]
@@ -195,16 +203,24 @@ def create_isa_datalib(mfiles, lib, gi, gu, galaxy_pass, galaxy_isa_upload_param
                                                   'status': 'Assay: {}'.format(assay_n)})
 
                 afolder = create_assay_folder(agrp, lc, lib, name_map, sfolder)
-                filelist = [os.path.join(settings.MEDIA_ROOT, f['data_file']) for f in agrp]
 
-                data_lib_files = save_to_galaxy(filelist, galaxy_isa_upload_param, lc, gu, gi, galaxy_pass,
-                                                 lib['id'], afolder['id'], full_assay_name, agrp)
+                data_lib_files = save_to_galaxy(agrp,
+                                                galaxy_isa_upload_param,
+                                                lc, gu, gi, galaxy_pass,
+                                                lib['id'], afolder['id'], full_assay_name)
                 #
                 file_count += len(data_lib_files)
 
 
 
-def save_to_galaxy(filelist, galaxy_isa_upload_param, lc, gu, gi, galaxy_pass, lib_id, folder_id, full_name, filedetails):
+def save_to_galaxy(filedetails, galaxy_isa_upload_param, lc, gu, gi,
+                   galaxy_pass, lib_id, folder_id, full_name, is_misa=False):
+
+    if is_misa:
+        filelist = [os.path.join(settings.MEDIA_ROOT, f.data_file.path) for f in filedetails]
+    else:
+        filelist = [os.path.join(settings.MEDIA_ROOT, f['data_file']) for f in filedetails]
+        
     data_lib_files = add_filelist_datalib(filelist,
                                           galaxy_isa_upload_param,
                                           lc,
@@ -214,15 +230,17 @@ def save_to_galaxy(filelist, galaxy_isa_upload_param, lc, gu, gi, galaxy_pass, l
                                           lib_id,
                                           folder_id,
                                           full_name)
-
-    link_files_in_galaxy(data_lib_files, filedetails, galaxy_isa_upload_param.galaxyinstancetracking, library=True)
+    
+    link_files_in_galaxy(data_lib_files,
+                         filedetails,
+                         galaxy_isa_upload_param.galaxyinstancetracking,
+                         True)
 
     return data_lib_files
 
 
 def create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name_map):
     investigation_n = igrp[0][name_map['investigation']]
-    print('========> Investigation:', investigation_n)
 
     if galaxy_isa_upload_param.remove:
         igt_for_removal = ISAGalaxyTrack.objects.filter(investigation__name=investigation_n)
@@ -235,8 +253,9 @@ def create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name
 
 
 
-    ifolder = lc.create_folder(library_id=lib['id'], description='isa_investigation', folder_name=investigation_n)[
-        0]
+    ifolder = lc.create_folder(library_id=lib['id'],
+                               description='isa_investigation',
+                               folder_name=investigation_n)[0]
 
     igt = ISAGalaxyTrack(galaxyinstancetracking=galaxy_isa_upload_param.galaxyinstancetracking,
                          isatogalaxyparam=galaxy_isa_upload_param,
@@ -250,7 +269,6 @@ def create_investigation_folder(igrp, lc, fc, lib, galaxy_isa_upload_param, name
 
 def create_study_folder(sgrp, lc, lib, name_map, ifolder):
     study_n = sgrp[0][name_map['study']]
-    print('====> Study:', study_n)
     sfolder = lc.create_folder(library_id=lib['id'],
                                folder_name=study_n,
                                description='isa_study',
@@ -270,14 +288,6 @@ def create_assay_folder(agrp, lc, lib, name_map, sfolder):
                                base_folder_id=sfolder['id'])[0]
 
     return afolder
-
-
-
-
-
-
-
-
 
 def group_by_keys(iterable, keys):
     # https://stackoverflow.com/questions/31955389/how-to-group-an-array-by-multiple-keys
