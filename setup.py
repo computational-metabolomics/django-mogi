@@ -12,10 +12,7 @@ setup(
     version='0.0.2',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-        'django>=1.11.15',
-        'django-galaxy',
-    ],
+    install_requires=open('requirements.txt').read().splitlines(),
     license='GNU License',  # example license
     description='Metabolomics Organisation with Galaxy and ISA',
     long_description=README,
