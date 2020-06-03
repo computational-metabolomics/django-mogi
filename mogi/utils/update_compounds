@@ -1,0 +1,67 @@
+import os
+import csv
+import django
+import time
+from django.db.models import Max, Min
+from bulk_update.helper import bulk_update
+#  you have to set the correct path to you settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mogi_site.settings")
+django.setup()
+from mogi.models.models_compounds import Compound
+from mogi.models.models_annotations import CompoundAnnotationSummary, CombinedAnnotation
+
+def update_compounds():
+    cass = []
+    for i, cmp in enumerate(Compound.objects.all()):
+        print('compound', cmp.inchikey)
+        cas_q = CombinedAnnotation.objects.filter(compound=cmp)
+        if cas_q:
+            cas = cas_q[0]
+        else:
+            cas = CompoundAnnotationSummary(compound=cmp)
+        summaries = CombinedAnnotation.objects.filter(
+            compound=cmp
+        ).values(
+            'combinedpeak__metabinputdata__polaritytype__type'
+        ).annotate(
+            Min('rank'),
+            Max('total_wscore')
+        )
+
+        if not summaries:
+            continue
+        
+        for summary in summaries:
+            pol = summary['combinedpeak__metabinputdata__polaritytype__type']
+            rank = summary['rank__min']
+            score = summary['total_wscore__max']
+
+            if pol=='POSITIVE':
+                cas.top_score_pos = score
+                cas.top_rank_pos = rank
+            elif pol=='NEGATIVE':
+                cas.top_score_neg = score
+                cas.top_rank_neg = rank
+
+        summary_all = CombinedAnnotation.objects.filter(
+            compound=cmp
+        ).annotate(
+            Min('rank'),
+            Max('total_wscore')
+        ).values(
+           'rank__min',
+           'total_wscore__max',
+           'combinedpeak__metabinputdata__assay_names' 
+        )[0]
+        cas.top_score = summary_all['total_wscore__max']
+        cas.top_rank = summary_all['rank__min']
+        cas.assays = summary_all['combinedpeak__metabinputdata__assay_names']
+        cas.save()
+            
+    return 0
+
+
+
+if __name__ == "__main__":
+    print('check')
+    update_compounds()
