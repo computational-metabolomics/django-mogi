@@ -53,7 +53,6 @@ from mogi.models.models_annotations import (
 from mogi.models.models_compounds import (
     Compound
 )
-from mogi.models.models_galaxy import HistoryDataMOGI
 from mogi.models.models_isa import Assay, Investigation
 from galaxy.models import History
 from galaxy.utils.history_actions import get_history_status, history_data_save_form
@@ -87,7 +86,7 @@ else:
 
 
 
-def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id,
+def setup_results_file_from_galaxy(user_id, galaxy_name, galaxy_data_id,
                          galaxy_history_id, investigation_name, celery_obj):
     if celery_obj:
         celery_obj.update_state(state='RUNNING',
@@ -100,11 +99,13 @@ def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id,
     get_history_status(user, galaxy_history_id)
 
     print('get internal history tracking')
+    print(galaxy_history_id)
+    print(galaxy_name)
     internal_h = History.objects.filter(galaxy_id=galaxy_history_id,
                                         galaxyinstancetracking__name=galaxy_name)
 
     # Get Galaxy histroy data
-    
+    print('INTERNAL HISTORY MODEL {}'.format(internal_h))
 
     if not internal_h:
         error_msg = 'No data available please check galaxy connection'
@@ -124,12 +125,16 @@ def get_data_from_galaxy(user_id, galaxy_name, galaxy_data_id,
                                     meta={'current': 0, 'total': 100, 'status': error_msg})
         return 0, error_msg
 
-    hdm = HistoryDataMOGI(investigation = i_qs[0], history=internal_h[0])
-
-    print(hdm)
-    hdm = history_data_save_form(user, internal_h[0].id, galaxy_data_id, hdm)
-    print('check')
-    return hdm
+    md = MetabInputData(galaxy_history=internal_h[0])
+    md.save()
+    
+    
+    md = history_data_save_form(user,
+                                 internal_h[0].id,
+                                 galaxy_data_id,
+                                 md)
+    
+    return md
 
 class UploadResults(object):
     def __init__(self, md_id, mfile_ids):
@@ -142,7 +147,8 @@ class UploadResults(object):
         self.md = MetabInputData.objects.get(pk=md_id)
 
         self.mfile_d = {}
-
+        print(self.md)
+        print(self.md.data_file)
         self.conn = sqlite3.connect(self.md.data_file.path)
         self.cursor = self.conn.cursor()
 

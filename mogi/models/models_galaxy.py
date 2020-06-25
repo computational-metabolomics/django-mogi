@@ -21,12 +21,6 @@ class ISAGalaxyTrack(models.Model):
         return self.galaxy_id
 
 
-class HistoryDataMOGI(HistoryData):
-    investigation = models.ForeignKey(Investigation, on_delete=models.CASCADE, null=True, blank=True)
-
-    def __str__(self):              # __unicode__ on Python 2
-        return self.investigation.name
-
 
 class IncomingGalaxyData(models.Model):
     galaxy_url = models.TextField(max_length=100, null=True, blank=True)

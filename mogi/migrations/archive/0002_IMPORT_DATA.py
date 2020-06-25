@@ -74,18 +74,19 @@ def forwards_func(apps, schema_editor):
     ps.save(using=db_alias)
 
 
-    #######################################################################################################
+    #############################################################################################
     # Setup ontologies
-    #######################################################################################################
+    #############################################################################################
     # print('###ontologies')
-    terms = ['NCIT_C49019', 'NCIT_C61575', 'SIO_001046', 'SIO_001047', 'CHEMINF_000070', 'CHMO_0002302',
-             'CHMO_0002262', 'CHMO_0002269', 'CO_356:3000142', 'CHMO_0002658', 'CHMO_0002804', 'NCIT_C16631',
-             'NCIT_C43366', 'NCIT_C14182', 'NCIT_C62195', 'NCIT_C25360', 'NCIT_C61299', 'NCIT_C25301', 'NCIT_C25207',
-             'NCBITaxon_35128',  'NCIT_C13413', 'NCBITaxon_35525', 'NCBITaxon_6669', 'SIO_001047' 'OMIT_0025161',
-             'CHMO_0000524', 'CHMO_0000701','OMIT_0025161', 'CHMO_0000575', 'FOODON:03414374', 'MS_1001911',
-             'AFFN_0000004', 'NCIT_C69023', 'CHMO_0002767', 'MS_1001911', 'CHMO_0002261', 'MS_1001910',
-             'OMIT_0025161', 'CHMO_0000524', 'CHMO_0000701', 'NCIT_C15311']
-
+    terms = ['NCIT_C49019', 'NCIT_C61575', 'SIO_001046', 'SIO_001047', 'CHEMINF_000070',
+             'CHMO_0002302', 'CHMO_0002262', 'CHMO_0002269', 'CO_356:3000142', 'CHMO_0002658',
+             'CHMO_0002804', 'NCIT_C16631', 'NCIT_C43366', 'NCIT_C14182', 'NCIT_C62195',
+             'NCIT_C25360', 'NCIT_C61299', 'NCIT_C25301', 'NCIT_C25207', 'NCBITaxon_35128',
+             'NCIT_C13413', 'NCBITaxon_35525', 'NCBITaxon_6669', 'SIO_001047' 'OMIT_0025161',
+             'CHMO_0000524', 'CHMO_0000701','OMIT_0025161', 'CHMO_0000575', 'FOODON:03414374',
+             'MS_1001911', 'AFFN_0000004', 'NCIT_C69023', 'CHMO_0002767', 'MS_1001911',
+             'CHMO_0002261', 'MS_1001910', 'OMIT_0025161', 'CHMO_0000524', 'CHMO_0000701',
+             'NCIT_C15311']
 
     [check_and_create_ontology(term, db_alias, False) for term in terms]
 
@@ -107,7 +108,9 @@ def forwards_func(apps, schema_editor):
     lpe_type2.ontologyterm.add(OntologyTerm.objects.filter(name='polar')[0])
     lpe_type2.ontologyterm.add(OntologyTerm.objects.filter(name='Extraction')[0])
 
-    lpe_type3 = ExtractionType(type="Just dilution", description="Some sample types only require dilution", public=True)
+    lpe_type3 = ExtractionType(type="Just dilution",
+                               description="Some sample types only require dilution",
+                               public=True)
     lpe_type3.save(using=db_alias)
 
     etype = ExtractionType(type="NA", description="NA", public=True)
@@ -184,7 +187,8 @@ def forwards_func(apps, schema_editor):
     m_type3.save(using=db_alias)
 
     m_type4 = MeasurementTechnique(type="DI-MSn",
-                                   description="Direct infusion mass spectrometry with fragmentation",
+                                   description="Direct infusion mass spectrometry with "
+                                               "fragmentation",
                                    public=True)
     m_type4.save(using=db_alias)
 
@@ -210,13 +214,20 @@ def forwards_func(apps, schema_editor):
     # Sample types
     #############################################################################################
     # print('###Sample Types')
-    st1 = SampleType(type='ANIMAL', public=True, ontologyterm=OntologyTerm.objects.filter(name='Animal')[0])
-    st2 = SampleType(type='COMPOUND', public=True, ontologyterm=OntologyTerm.objects.filter(name='Compound')[0])
-    st3 = SampleType(type='BLANK', public=True, ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
-    st4 = SampleType(type='MISC', public=True, ontologyterm=OntologyTerm.objects.filter(name='Miscellaneous')[0])
-    st5 = SampleType(type='EQUIL_BLANK', public=True, ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
-    st6 = SampleType(type='EQUIL', public=True, ontologyterm=OntologyTerm.objects.filter(name='to equilibrate')[0])
-    st7 = SampleType(type='QC', public=True, ontologyterm=OntologyTerm.objects.filter(name='Quality Control')[0])
+    st1 = SampleType(type='ANIMAL', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='Animal')[0])
+    st2 = SampleType(type='COMPOUND', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='Compound')[0])
+    st3 = SampleType(type='BLANK', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
+    st4 = SampleType(type='MISC', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='Miscellaneous')[0])
+    st5 = SampleType(type='EQUIL_BLANK', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
+    st6 = SampleType(type='EQUIL', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='to equilibrate')[0])
+    st7 = SampleType(type='QC', public=True,
+                     ontologyterm=OntologyTerm.objects.filter(name='Quality Control')[0])
 
     st1.save(using=db_alias)
     st2.save(using=db_alias)
@@ -234,10 +245,8 @@ def forwards_func(apps, schema_editor):
     # Setup ISA backbone (DMA)
     #############################################################################################
     investigation = Investigation(name='DMA of D. magna',
-                                  description="""
-                                              Deep metabolome annotation project of Daphnia 
-                                              magna
-                                              """,
+                                  description="Deep metabolome annotation project of Daphnia "
+                                              "magna",
                                   public=True)
     investigation.save(using=db_alias)
 
@@ -255,11 +264,9 @@ def forwards_func(apps, schema_editor):
     #============================================
     # print('###Sample collection protocol')
     sc_protocol = SampleCollectionProtocol(name="DMA D. magna pooled culture",
-                             description="""
-                                         9 geneticaly distinct strains of D.magna 
-                                         pooled together to form 
-                                         one representative sample 
-                                         """,
+                             description="9 geneticaly distinct strains of D.magna "
+                                         "pooled together to form "
+                                         "one representative sample",
                              version=1,
                              code_field="D-CULT",
                                            public=True)
@@ -286,11 +293,10 @@ def forwards_func(apps, schema_editor):
     lpe_protocol.save(using=db_alias)
 
     lpe_protocol = ExtractionProtocol(name="DMA D. magna apolar extraction",
-                                      description=""" Deep Metabolome Annotation Apolar 
-                                                      extraction for Daphnia magna
-                                                  """,
+                                      description="Deep Metabolome Annotation Apolar"
+                                                   "extraction for Daphnia magna",
                                       version=1,
-                                      code_field="d-APOL",
+                                      code_field="D-APOL",
                                       extractiontype=ExtractionType.objects.filter(
                                           type='Apolar')[0],
                                       postextraction="90:10 (v/v) water:acetonitrile",
@@ -299,12 +305,12 @@ def forwards_func(apps, schema_editor):
     lpe_protocol.save(using=db_alias)
 
     lpe_protocol = ExtractionProtocol(name="DMA D. magna polar extraction ",
-                                      description=""" Deep Metabolome Annotation
-                                                      polar extraction for Daphnia magna
-                                                  """,
+                                      description="Deep Metabolome Annotation "
+                                                  "polar extraction for Daphnia magna",
                                       version=1,
                                       code_field="D-POL",
-                                      extractiontype=ExtractionType.objects.filter(type='Polar')[0],
+                                      extractiontype=ExtractionType.objects.filter(
+                                          type='Polar')[0],
                                       postextraction="90:10 (v/v) water:acetonitrile",
                                       public=True
                                       )
@@ -425,11 +431,13 @@ def forwards_func(apps, schema_editor):
     m_protocol.save(using=db_alias)
 
     m_protocol = MeasurementProtocol(name="DMA D. magna QE LC-MS",
-                                     description="Liquid chromatography mass spectrometry measurements "
+                                     description="Liquid chromatography mass spectrometry"
+                                                 "measurements "
                                                  "with Q Exactive for DMA D. magna",
                                      version=1,
                                      code_field="D-LCMS",
-                                     measurementtechnique=MeasurementTechnique.objects.filter(type='LC-MS')[0],
+                                     measurementtechnique=MeasurementTechnique.objects.filter(
+                                         type='LC-MS')[0],
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
@@ -437,11 +445,13 @@ def forwards_func(apps, schema_editor):
 
 
     m_protocol = MeasurementProtocol(name="DMA D. magna QE LC-MSMS",
-                                     description="Liquid chromatography tandem mass spectrometry measurements "
+                                     description="Liquid chromatography tandem mass spectrometry"
+                                                 "measurements "
                                                  "with Q Exactive for DMA D. magna",
                                      version=1,
                                      code_field="D-LCMSMS",
-                                     measurementtechnique=MeasurementTechnique.objects.filter(type='LC-MSMS')[0],
+                                     measurementtechnique=MeasurementTechnique.objects.filter(
+                                         type='LC-MSMS')[0],
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
@@ -449,11 +459,13 @@ def forwards_func(apps, schema_editor):
     m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000575')[0])
 
     m_protocol = MeasurementProtocol(name="DMA D. magna Elite DI-MS",
-                                     description="Direct infusion mass spectrometry using Obitrap Elite for "
+                                     description="Direct infusion mass spectrometry using "
+                                                 "Obitrap Elite for "
                                                  "DMA D. magna",
                                      version=1,
                                      code_field="D-DIMS",
-                                     measurementtechnique=MeasurementTechnique.objects.filter(type='DI-MS')[0],
+                                     measurementtechnique=MeasurementTechnique.objects.filter(
+                                         type='DI-MS')[0],
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
@@ -462,10 +474,12 @@ def forwards_func(apps, schema_editor):
 
     m_protocol = MeasurementProtocol(name="DMA D. magna Elite DI-MSn",
                                      description="Direct infusion mass spectrometry with "
-                                                 "fragmentation using Obitrap Elite for DMA D. magna",
+                                                 "fragmentation using Obitrap Elite for DMA "
+                                                 "D. magna",
                                      version=1,
                                      code_field="D-DIMSn",
-                                     measurementtechnique=MeasurementTechnique.objects.filter(type='DI-MSn')[0],
+                                     measurementtechnique=MeasurementTechnique.objects.filter(
+                                         type='DI-MSn')[0],
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
@@ -482,12 +496,15 @@ def forwards_func(apps, schema_editor):
                       organism=Organism.objects.filter(name='Daphnia magna')[0],
                       organism_part=OrganismPart.objects.filter(name='Whole Organism')[0],
                       public=True)
-    ss2 = StudySample(sampletype=SampleType.objects.filter(type='COMPOUND')[0], sample_name='COMPOUND',
+    ss2 = StudySample(sampletype=SampleType.objects.filter(type='COMPOUND')[0],
+                      sample_name='COMPOUND',
                       study_id=study.id, public=True)
-    ss3 = StudySample(sampletype=SampleType.objects.filter(type='BLANK')[0], sample_name='BLANK', study_id=study.id,
+    ss3 = StudySample(sampletype=SampleType.objects.filter(type='BLANK')[0],
+                      sample_name='BLANK', study_id=study.id,
                       public=True)
 
-    ss4 = StudySample(sampletype=SampleType.objects.filter(type='EQUIL_BLANK')[0], sample_name='EQUIL_BLANK',
+    ss4 = StudySample(sampletype=SampleType.objects.filter(type='EQUIL_BLANK')[0],
+                      sample_name='EQUIL_BLANK',
                       study_id=study.id,
                       public=True)
 
@@ -508,60 +525,74 @@ def forwards_func(apps, schema_editor):
     ss5.save(using=db_alias)
     ss6.save(using=db_alias)
 
-    ####################################################################################################################
+    #############################################################################################
     # Spectral matching annotation details
-    ####################################################################################################################
+    #############################################################################################
     maa = MetaboliteAnnotationApproach(name='Spectral matching')
     maa.save(using=db_alias)
 
-    st = ScoreType(name='dpc', description='Dot product cosine', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='rdpc', description='Reverse dot product cosine', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='cdpc', description='Composite dot product cosine', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='mcount', description='Count of matching peaks', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='allcount', description='Count of all peaks', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='mpercent', description='Percentage of all peaks', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='rtdiff', description='retention time difference', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-
-    ####################################################################################################################
-    # Metfrag annotation details
-    ####################################################################################################################
-    maa = MetaboliteAnnotationApproach(name='Metfrag')
-    maa.save(using=db_alias)
-
-    st = ScoreType(name='OfflineMetFusionScore', description='Offline MetFusion Score', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='SuspectListScore', description='Suspect List Score', metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='FragmenterScore', description='Fragmeter Score',  metaboliteannotationapproach=maa)
-    st.save(using=db_alias)
-
-    st = ScoreType(name='Score', description='Final score from Metfrag (weighted internally within Metfrag)',
+    st = ScoreType(name='dpc', description='Dot product cosine',
                    metaboliteannotationapproach=maa)
     st.save(using=db_alias)
 
-    st = ScoreType(name='NoExplPeaks', description='NoExplPeaks', metaboliteannotationapproach=maa)
+    st = ScoreType(name='rdpc', description='Reverse dot product cosine',
+                   metaboliteannotationapproach=maa)
     st.save(using=db_alias)
 
-    st = ScoreType(name='NumberPeaksUsed', description='NumberPeaksUsed', metaboliteannotationapproach=maa)
+    st = ScoreType(name='cdpc', description='Composite dot product cosine',
+                   metaboliteannotationapproach=maa)
     st.save(using=db_alias)
 
-    st = ScoreType(name='MaximumTreeDepth', description='MaximumTreeDepth', metaboliteannotationapproach=maa)
+    st = ScoreType(name='mcount', description='Count of matching peaks',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='allcount', description='Count of all peaks',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='mpercent', description='Percentage of all peaks',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='rtdiff', description='retention time difference',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+
+    #############################################################################################
+    # Metfrag annotation details
+    #############################################################################################
+    maa = MetaboliteAnnotationApproach(name='Metfrag')
+    maa.save(using=db_alias)
+
+    st = ScoreType(name='OfflineMetFusionScore', description='Offline MetFusion Score',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='SuspectListScore', description='Suspect List Score',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='FragmenterScore', description='Fragmeter Score',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='Score',
+                   description='Final score from Metfrag (weighted internally within Metfrag)',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='NoExplPeaks', description='NoExplPeaks',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='NumberPeaksUsed', description='NumberPeaksUsed',
+                   metaboliteannotationapproach=maa)
+    st.save(using=db_alias)
+
+    st = ScoreType(name='MaximumTreeDepth', description='MaximumTreeDepth',
+                   metaboliteannotationapproach=maa)
     st.save(using=db_alias)
 
     dt = DetailType(name='adduct', description='adduct', metaboliteannotationapproach=maa)
@@ -570,7 +601,8 @@ def forwards_func(apps, schema_editor):
     dt = DetailType(name='ExplPeaks', description='ExplPeaks', metaboliteannotationapproach=maa)
     dt.save(using=db_alias)
 
-    dt = DetailType(name='FormulasOfExplPeaks', description='FormulasOfExplPeaks', metaboliteannotationapproach=maa)
+    dt = DetailType(name='FormulasOfExplPeaks', description='FormulasOfExplPeaks',
+                    metaboliteannotationapproach=maa)
     dt.save(using=db_alias)
 
     dt = DetailType(name='FragmenterScore_Values', description='FragmenterScore_Values',
@@ -589,9 +621,9 @@ def forwards_func(apps, schema_editor):
                     metaboliteannotationapproach=maa)
     dt.save(using=db_alias)
 
-    ####################################################################################################################
+    #############################################################################################
     # Sirius Annotation details
-    ####################################################################################################################
+    #############################################################################################
     maa = MetaboliteAnnotationApproach(name='SIRIUS CSI:FingerID')
     maa.save(using=db_alias)
 
@@ -608,7 +640,8 @@ def forwards_func(apps, schema_editor):
     st.save(using=db_alias)
 
 
-    dt = DetailType(name='links', description='Relevant links for compound annotation (generated from SIRIUS '
+    dt = DetailType(name='links',
+                    description='Relevant links for compound annotation (generated from SIRIUS '
                                               'CSI:FingerID',
                     metaboliteannotationapproach=maa)
     dt.save(using=db_alias)
@@ -618,9 +651,9 @@ def forwards_func(apps, schema_editor):
     dt.save(using=db_alias)
 
 
-    ####################################################################################################################
+    #############################################################################################
     # MS1 Lookup details
-    ####################################################################################################################
+    #############################################################################################
     maa = MetaboliteAnnotationApproach(name='MS1 Lookup')
     maa.save(using=db_alias)
 
