@@ -77,15 +77,15 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 STATIC_URL = '/static/'
 
-ROOT_URLCONF = 'mogi_site.urls'
+#ROOT_URLCONF = 'mogi_site.urls'
 
 LOGIN_REDIRECT_URL = 'index'
 LOGIN_URL = '/login/'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media_test')
-MEDIA_URL = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = '/media/'
+MEDIA_URL =  '/media/'
 
 
 EXTERNAL_DATA_ROOTS = {'TEST': {

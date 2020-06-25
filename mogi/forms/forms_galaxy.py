@@ -30,14 +30,4 @@ class ISAWorkflowRunForm(WorkflowRunForm):
     auto_samplelist = forms.BooleanField(required=False)
 
 
-class HistoryMogiDataForm(forms.ModelForm):
-
-    def __init__(self, *args, **kwargs):
-        super(HistoryMogiDataForm, self).__init__(*args, **kwargs)
-        self.fields['history'].disabled = True
-        self.fields['name'].disabled = True
-
-    class Meta:
-        model = models_galaxy.HistoryDataMOGI
-        fields = ('history', 'name', 'investigation')
 

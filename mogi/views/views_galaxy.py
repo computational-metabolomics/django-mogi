@@ -31,9 +31,9 @@ from .views_isa import InvestigationListView
 
 
 
-#################################################################################################
+##############################################################################################
 # REST
-#################################################################################################
+#############################################################################################
 class IncomingGalaxyDataViewSet(viewsets.ModelViewSet):
     """
     """
@@ -51,9 +51,9 @@ class IncomingGalaxyDataListView(LoginRequiredMixin, SingleTableMixin, ListView)
 
 
 
-#################################################################################################
+##############################################################################################
 # Galaxy ISA uploads and workflows
-#################################################################################################
+##############################################################################################
 class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
     '''
     '''
@@ -89,7 +89,7 @@ class ISAWorkflowRunView(WorkflowRunView):
     table_class = tables_isa.ISAFileSelectTable
     filter_class = filter_isa.ISAFileFilter
     form_class = forms_galaxy.ISAWorkflowRunForm
-    redirect_to = 'history_mogi'
+    redirect_to = 'history'
 
 
 class ISAFileSelectToGalaxyDataLib(FilesToGalaxyDataLib):
@@ -107,73 +107,9 @@ class ISAWorkflowListView(WorkflowListView):
     redirect_to = 'isa_workflow_summary'
 
 
-########################################################################################################################
+##############################################################################################
 # Galaxy History data upload to django-metab
-########################################################################################################################
-class HistoryDataMogiListView(LoginRequiredMixin, View):
-
-    def get(self, request, *args, **kwargs):
-        data = get_history_data(self.kwargs['pk'], request.user, data_type=['sqlite'])
-
-        table = tables_galaxy.HistoryMogiDataTable(data)
-
-        return render(request, 'galaxy/history_data_bioblend_list.html', {'table': table})
-        # return render(request, 'galaxy/history_status.html', {'table': table})
-
-class HistoryMogiListView(HistoryListView):
-
-    template_name = 'galaxy/history_status.html'
-    table_class = tables_galaxy.HistoryMogiTable
-
-
-class HistoryDataMogiCreateView(HistoryDataCreateView):
-    model = models_galaxy.HistoryDataMOGI
-    form_class = forms_galaxy.HistoryMogiDataForm
-    template_name = 'galaxy/historydata_form.html'
-
-    def form_valid(self, form):
-        obj = self.save_form(form)
-        # first get all the mfiles associated with the investigation
-
-        result = save_lcms_mogi.delay(obj.pk, self.request.user.id)
-        self.request.session['result'] = result.id
-        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
-
-
-class HistoryDataMogiFromRestCreateView(HistoryDataMogiCreateView):
-
-    def get_initial(self):
-        user = self.request.user
-        get_history_status(user)
-
-        galaxy_name = self.kwargs.get('galaxy_name')
-        galaxy_data_id = self.kwargs.get('galaxy_data_id')
-        galaxy_history_id = self.kwargs.get('galaxy_history_id')
-
-        internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
-
-        if internal_h:
-            history_d = init_history_data_save_form(user=user, history_internal_id=internal_h[0].id, galaxy_dataset_id=galaxy_data_id)
-
-            return {'history': internal_h[0].id,
-                    'name': history_d['name']}
-        else:
-            return {'history': 'NO DATA AVAILABLE (PLEASE CHECK CONNECTION)',
-                    'name': 'NO DATA AVAILABLE (PLEASE CHECK CONNECTION)'}
-
-    def save_form(self, form):
-        history_data_obj = form.save(commit=False)
-        history_data_obj.user = self.request.user
-
-        galaxy_name = self.kwargs.get('galaxy_name')
-        galaxy_data_id = self.kwargs.get('galaxy_data_id')
-        galaxy_history_id = self.kwargs.get('galaxy_history_id')
-
-        internal_h = History.objects.filter(galaxy_id=galaxy_history_id, galaxyinstancetracking__name=galaxy_name)
-
-        return history_data_save_form(self.request.user, internal_h[0].id, galaxy_data_id, history_data_obj)
-
-
+##############################################################################################
 class SaveLcmsFromFromRest(LoginRequiredMixin, View):
 
 

@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from galaxy.models import FilesToGalaxyDataLibraryParam
-from gfiles.models import TrackTasks
+from gfiles.models import TrackTasks, GenericFile
 
 from mogi.models.models_isa import MFile
 from mogi.models.models_inputdata import MetabInputData
@@ -20,7 +20,7 @@ from mogi.utils.msp2db import LibraryData
 from mogi.utils.search_mz_nm import search_mz, search_nm
 from mogi.utils.search_frag import search_frag
 from mogi.utils.download_annotations import DownloadAnnotations
-from mogi.utils.upload_results import UploadResults, get_data_from_galaxy
+from mogi.utils.upload_results import UploadResults, setup_results_file_from_galaxy
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 
 
@@ -151,31 +151,25 @@ def upload_metab_results_galaxy_task(self, userid, galaxy_name,
     tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Data upload', user_id=userid)
     tt.save()
 
-    hdm = get_data_from_galaxy(userid, galaxy_name,
-                               galaxy_data_id, galaxy_history_id, investigation_name, self)
-
-    if not hdm:
+    md = setup_results_file_from_galaxy(userid,
+                                        galaxy_name,
+                                        galaxy_data_id,
+                                        galaxy_history_id,
+                                        investigation_name,
+                                        self)
+    print('MD {}'.format(md))
+    
+    if not md:
         tt.result = reverse('metabinputdata_summary')
         tt.state = 'FAILURE'
         tt.save()
-        return 0    
-    md = MetabInputData(genericfile_ptr_id=hdm.genericfile_ptr_id)
-    md.save()
+        return 0
 
-    print(md)
 
     results = UploadResults(md.id, None)
     results.upload(celery_obj=self)
 
-    if not lcms_data_transfer.transfer(celery_obj=self):
-        # something wen't wrong don't perform the remaining analysis
-        return 0
 
-    
-    # run function
-    results = UploadResults(pk, None)
-    results.upload(celery_obj=self)
- 
     # save successful result
     tt.result = reverse('metabinputdata_summary')
     tt.state = 'SUCCESS'
