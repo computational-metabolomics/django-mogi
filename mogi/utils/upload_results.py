@@ -1373,7 +1373,7 @@ class UploadResults(object):
             except ValueError:
                 continue
 
-            if row[names['grpid']]]
+            
             
             if TEST_MODE:
                 if idi > 500:
