@@ -1367,13 +1367,9 @@ class UploadResults(object):
         speakmeta_d = {c.idi: c.pk for c in SPeakMeta.objects.filter(metabinputdata=md)}
 
         for idi, row in enumerate(cursor):
-            try:
+            if not row[names['grpid']].is_integer():
                 # ignore rows where we can't get a real grpid
-                int(row[names['grpid']])
-            except ValueError:
                 continue
-
-            
             
             if TEST_MODE:
                 if idi > 500:
