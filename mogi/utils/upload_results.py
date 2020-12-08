@@ -1369,7 +1369,7 @@ class UploadResults(object):
         for idi, row in enumerate(cursor):
             try:
                 # ignore rows where we can't get a real grpid
-                int(row[names['grpid']]]
+                int(row[names['grpid']])
             except ValueError:
                 continue
 
