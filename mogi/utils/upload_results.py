@@ -934,7 +934,7 @@ class UploadResults(object):
         md = self.md
         cursor = self.cursor
         
-        if not check_table_exists_sqlite(cursor, 's_peaks_X_speaks'):
+        if not check_table_exists_sqlite(cursor, 's_peaks_X_s_peaks'):
             return 0
 
         cursor.execute('SELECT * FROM  s_peaks_X_s_peaks')
