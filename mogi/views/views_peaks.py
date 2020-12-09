@@ -104,7 +104,7 @@ class Frag4CombinedPeakListView(LoginRequiredMixin, SingleTableMixin, ListView):
                     LEFT JOIN mogi_speakmetaspeaklink AS smxs ON smxs.speakmeta_id=spm.id 
                     LEFT JOIN mogi_speak AS sp ON sp.id=smxs.speak_id
                     LEFT JOIN mogi_speakspeaklink AS spXsp ON spXsp.speak2_id=sp.id
-                    WHERE spXsp.speak1_id={}
+                    WHERE sp.id={}
             """.format(combinedpeak.speak.id)
 
             with connection.cursor() as cursor:
