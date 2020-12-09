@@ -1608,7 +1608,7 @@ class UploadResults(object):
         combinedps = []
 
         # Get summary for fractionation peaks
-        for i, sp in enumerate(SPeak.objects.filter(speakmeta__metabinputdata=md, speakmeta__spectrum_type='dimspy0')):
+        for i, sp in enumerate(SPeak.objects.filter(speakmeta__metabinputdata=md, speakmeta__spectrum_type='dimspy')):
             if i % 100 == 0:
                 if celery_obj:
                     celery_obj.update_state(state='RUNNING',
@@ -1667,7 +1667,7 @@ class UploadResults(object):
 
         cpeakgroups_d = {c.idi: c.pk for c in CPeakGroup.objects.filter(cpeakgroupmeta=cpgm)}
         speaks_d = {c.idi: c.pk for c in SPeak.objects.filter(speakmeta__metabinputdata=md,
-                                                              speakmeta__spectrum_type='dimspy0')}
+                                                              speakmeta__spectrum_type='dimspy')}
 
         # Get summary of LC-MS/MS peaks
         cas = []
