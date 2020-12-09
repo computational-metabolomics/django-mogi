@@ -92,6 +92,7 @@ class Frag4CombinedPeakListView(LoginRequiredMixin, SingleTableMixin, ListView):
             frag = frag_lcmsms_scans | frag_lcmsms_average
 
         if combinedpeak.speak:
+            print('combined_speak')
 
             # Fragmentation for fracationataion.
             # Three different types of spectra
@@ -117,7 +118,8 @@ class Frag4CombinedPeakListView(LoginRequiredMixin, SingleTableMixin, ListView):
                 frag = frag | frag_fract
             else:
                 frag = frag_fract
-
+        
+        print(frag)
         return frag
 
 
