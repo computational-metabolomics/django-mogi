@@ -86,7 +86,7 @@ def forwards_func(apps, schema_editor):
              'CHMO_0000524', 'CHMO_0000701','OMIT_0025161', 'CHMO_0000575', 'FOODON:03414374',
              'MS_1001911', 'AFFN_0000004', 'NCIT_C69023', 'CHMO_0002767', 'MS_1001911',
              'CHMO_0002261', 'MS_1001910', 'OMIT_0025161', 'CHMO_0000524', 'CHMO_0000701',
-             'NCIT_C15311']
+             'NCIT_C15311', 'MS_1001911']
 
     [check_and_create_ontology(term, db_alias, False) for term in terms]
 
