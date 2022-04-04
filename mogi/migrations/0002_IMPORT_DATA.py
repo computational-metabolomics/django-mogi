@@ -442,9 +442,7 @@ def forwards_func(apps, schema_editor):
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
-    print(OntologyTerm.objects.filter(short_form='CHMO_0000575'))
-    print(OntologyTerm.objects.filter(short_form='MS_1001911'))
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001911')[0])
+    #m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001911')[0])
 
 
     m_protocol = MeasurementProtocol(name="DMA D. magna QE LC-MSMS",
@@ -458,7 +456,7 @@ def forwards_func(apps, schema_editor):
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001911')[0])
+    #m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001911')[0])
     m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000575')[0])
 
     m_protocol = MeasurementProtocol(name="DMA D. magna Elite DI-MS",
@@ -472,7 +470,7 @@ def forwards_func(apps, schema_editor):
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001910')[0])
+    #m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001910')[0])
 
 
     m_protocol = MeasurementProtocol(name="DMA D. magna Elite DI-MSn",
@@ -486,7 +484,7 @@ def forwards_func(apps, schema_editor):
                                      public=True
                                      )
     m_protocol.save(using=db_alias)
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001910')[0])
+    #m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001910')[0])
     m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000575')[0])
 
 
