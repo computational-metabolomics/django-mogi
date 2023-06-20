@@ -25,42 +25,46 @@ class SearchParam(models.Model):
                              on_delete=models.CASCADE, null=True, blank=True)
     description = models.CharField(max_length=100, blank=True, null=True,
                                    help_text='Any details to track for the analysis')
-    investigation = models.ManyToManyField('Investigation',
-                                           help_text='Choose investigation to search against')
-    study = models.ManyToManyField('Study', help_text='Choose study to search against')
-    assay = models.ManyToManyField('Assay', help_text='Choose assay to search against')
 
+    class Meta:
+        ordering = ('-id', )
 
     def __str__(self):              # __unicode__ on Python 2
-        return self.searchmzparam
+        return str(self.id)
 
 
-class SearchResult(models.Model):
-    result_file = models.FileField(upload_to=data_file_store, blank=True, null=True)
-    matches = models.BooleanField()
-    searchparam = models.ForeignKey(SearchParam, on_delete=models.CASCADE)
+class FragSpectraType(models.Model):
+    type = models.CharField(max_length=100, blank=True, null=True,)
+    short_name = models.CharField(max_length=15, blank=True, null=True,)
 
-    def __str__(self):              # __unicode__ on Python 2
-        return self.searchmzparam
-
+    def __str__(self):
+        return str(self.type)
 
 class SearchFragParam(SearchParam):
 
     mz_precursor = models.FloatField()
     products = models.TextField(help_text=
                                 'list product ions m/z and intensity pairs on each row')
-    ppm_precursor_tolerance = models.FloatField(default=5)
-    ppm_product_tolerance = models.FloatField(default=10)
+    ppm_precursor_tolerance = MinMaxFloat(default=5, max_value=20, min_value=0)
+    ppm_product_tolerance = MinMaxFloat(default=5, max_value=20, min_value=0)
     dot_product_score_threshold = MinMaxFloat(default=0.5, max_value=1, min_value=0)
-    precursor_ion_purity = MinMaxFloat(default=0, max_value=1, min_value=0)
-    ra_threshold = MinMaxFloat(default=0.05, max_value=1, min_value=0,
+
+    ra_threshold = MinMaxFloat(default=0.0, max_value=1, min_value=0,
                                help_text='Remove any peaks below %x of the most intense peak ')
     ra_diff_threshold = models.FloatField(default=10)
 
-    filter_on_precursor = models.BooleanField(blank=True)
-    polarity = models.ManyToManyField('PolarityType',
-                                      help_text='Choose polarites to search against')
+    metabolite_reference_standard = models.BooleanField(blank=False, null=False, default=False,
+                                                        help_text='Include reference standard data in search '
+                                                                  '(i.e. DMA assays where metabolite reference standards were measured)')
 
+    fragspectratype = models.ManyToManyField('FragSpectraType',
+                                             verbose_name='Fragmentation spectra type',
+                                      help_text='Choose fragmentation spectra type')
+
+
+    # filter_on_precursor = models.BooleanField(blank=True)
+    polarity = models.ManyToManyField('PolarityType',
+                                      help_text='Choose polarities to search against')
 
 
     def __str__(self):              # __unicode__ on Python 2
@@ -74,27 +78,75 @@ class MsLevel(models.Model):
         return str(self.ms_level)
 
 
-class SearchNmParam(SearchParam):
+class SearchMonoParam(SearchParam):
     masses = models.TextField(blank=True, null=True,
-                              help_text='list of exact masses to search against database')
-    ppm_target_tolerance = models.FloatField(blank=True, null=True, default=10)
-    ppm_library_tolerance = models.FloatField(blank=True, null=True, default=10)
-    polarity = models.ManyToManyField('PolarityType',
-                                      help_text='Choose polarites to search against')
+                              help_text='list of monoisotopic exact masses to search against database')
+    ppm_tolerance = MinMaxFloat(default=5, max_value=100, min_value=0)
+    matches = models.BooleanField(default=False)
 
-    # mass_type = models.ForeignKey('MassType', on_delete=models.CASCADE,
-    #                               help_text='Choose if "mass in neutral form" or "mass in ion form". '
-    #                                         'Ion form here being the m/z value directly from the mass spectrometer',
-    #                               null=False, blank=False)
+
+class SearchMonoResult(models.Model):
+
+    searchparam = models.ForeignKey(SearchParam, on_delete=models.CASCADE)
+    compound = models.ForeignKey('Compound', on_delete=models.CASCADE)
+    massquery = models.FloatField(blank=True, null=True, verbose_name='Query mass')
+    ppmdiff = models.FloatField(blank=True, null=True)
+
+    def __str__(self):              # __unicode__ on Python 2
+        return str(self.id)
+
+class SearchFragResult(models.Model):
+
+    searchparam = models.ForeignKey(SearchParam, on_delete=models.CASCADE)
+    dpc = models.FloatField(blank=True, null=True)
+    l_prec_mz = models.FloatField(blank=True, null=True)
+    q_prec_mz = models.FloatField(blank=True, null=True)
+    rt = models.FloatField(blank=True, null=True)
+    well = models.CharField(max_length=254, blank=True, null=True)
+    ppm_diff_prec = models.FloatField(blank=True, null=True)
+    dataset_pid = models.IntegerField(blank=True, null=True)
+    dataset_grpid = models.IntegerField(blank=True, null=True)
+    dataset_sid = models.IntegerField(blank=True, null=True)
+    spectrum_type = models.CharField(max_length=254, blank=True, null=True)
+    spectrum_details = models.CharField(max_length=254, blank=True, null=True)
+
+    top_spectral_match = models.CharField(max_length=254, blank=True, null=True)
+    top_metfrag = models.CharField(max_length=254, blank=True, null=True)
+    top_sirius_csifingerid = models.CharField(max_length=254, blank=True, null=True)
+
+    top_combined_annotation = models.CharField(max_length=254, blank=True, null=True)
+    top_wscore = models.FloatField(blank=True, null=True)
+
+    dataset = models.ForeignKey('Dataset', on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):              # __unicode__ on Python 2
+        return str(self.id)
+
+    class Meta:
+        ordering = ('-dpc', )
+
+
+
+
+
+class SearchFragSpectra(models.Model):
+
+    searchparam = models.ForeignKey(SearchParam, on_delete=models.CASCADE)
+    mz = models.FloatField(blank=True, null=True)
+    ra = models.FloatField(blank=True, null=True)
+    query_library = models.CharField(max_length=254, blank=True, null=True)
+
+    def __str__(self):              # __unicode__ on Python 2
+        return str(self.id)
 
 
 class SearchMzParam(SearchParam):
 
     masses = models.TextField(blank=True, null=True, help_text='list of exact masses to search against database')
-    ppm_target_tolerance = models.FloatField(blank=True, null=True, default=10)
-    ppm_library_tolerance = models.FloatField(blank=True, null=True, default=10)
+    ppm_target_tolerance = models.FloatField(blank=True, null=True, default=5)
+    ppm_library_tolerance = models.FloatField(blank=True, null=True, default=5)
     polarity = models.ManyToManyField('PolarityType',
-                                      help_text='Choose polarites to search against')
+                                      help_text='Choose polarities to search against')
 
 
     # mass_type = models.ForeignKey('MassType', on_delete=models.CASCADE,

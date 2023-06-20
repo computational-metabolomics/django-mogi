@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block sb_admin_title %}Spectral matching plot {% endblock sb_admin_title %}
+{% block sb_admin_subheading %} <small></small> {% endblock sb_admin_subheading %}
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "data_and_results_summary" %}"> data & results summary</a>
+    / <a href="{% url "dataset_summary" %}"> dataset summary </a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / spectral matching plot | dataset: {{ view.kwargs.did }} | qpid: {{ view.kwargs.qpid }} | lpid: {{ view.kwargs.lpid }}
+{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %}Summary{% endblock panel_title %}
+{% block content %}
+    {% if graph %}
+        <div style="width:600;height:500">
+            {{ graph|safe }}
+        </div>
+    {% endif %}
+{% endblock content %}

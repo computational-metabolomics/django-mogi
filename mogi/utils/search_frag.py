@@ -2,28 +2,33 @@ from __future__ import print_function
 import csv
 import os
 import tempfile
+import sqlite3
 
 from django.core.files import File
 import numpy as np
 from django.db.models import F, Q
 from mogi.models.models_search import (
     SearchFragParam,
-    SearchResult
+    SearchFragResult,
+    SearchFragSpectra,
 )
-from mogi.models.models_peaks import (
-    SPeak,
-    SPeakMeta,
+from mogi.models.models_datasets import (
+    Dataset,
 )
+from mogi.models.models_isa import (
+    Assay,
+    AssayDetail
+)
+
 
 def search_frag(sp_id, celery_obj=None):
-
     if celery_obj:
         celery_obj.update_state(state='RUNNING',
                                 meta={'current': 0, 'total': 100, 'status': 'Spectral matching --'})
 
     sfp = SearchFragParam.objects.get(id=sp_id)
-    # if smp.mass_type=='mz':
-    mz_precursor = sfp.mz_precursor
+
+    q_prec_mz = sfp.mz_precursor
     ppm_precursor_tolerance = sfp.ppm_precursor_tolerance
     ra_threshold = sfp.ra_threshold
     ra_diff_threshold = sfp.ra_diff_threshold
@@ -31,179 +36,285 @@ def search_frag(sp_id, celery_obj=None):
     dot_product_score_threshold = sfp.dot_product_score_threshold
     polarities = [i['id'] for i in list(sfp.polarity.all().values('id'))]
 
+    fragspectratypes = [i['short_name'] for i in list(sfp.fragspectratype.all().values('short_name'))]
+
+    metabolite_reference_standard_filter = sfp.metabolite_reference_standard
 
     products = ['mz,i']
     products.extend(sfp.products.splitlines())
 
     reader_list = csv.DictReader(products)
-    q_mz = np.zeros(len(products)-1, dtype='float64')
-    q_i = np.zeros(len(products)-1, dtype='float64')
-
-
+    q_mz = np.zeros(len(products) - 1, dtype='float64')
+    q_i = np.zeros(len(products) - 1, dtype='float64')
     for i, row in enumerate(reader_list):
+        q_mz[i] = row['mz'].strip()
+        q_i[i] = row['i'].strip()
 
-        q_mz[i] = row['mz']
-        q_i[i] = row['i']
-
-    q_ra = q_i / q_i.max()
+    q_ra = q_i / q_i.max() * 100
     q_ra_bool = q_ra > ra_threshold
     q_ra = q_ra[q_ra_bool]
     q_mz = q_mz[q_ra_bool]
 
+    query_prec_low = q_prec_mz - ((q_prec_mz * 0.000001) * ppm_precursor_tolerance)
+    query_prec_high = q_prec_mz + ((q_prec_mz * 0.000001) * ppm_precursor_tolerance)
 
-    target_prec_low = mz_precursor - ((mz_precursor * 0.000001) * ppm_precursor_tolerance)
-    target_prec_high = mz_precursor + ((mz_precursor * 0.000001) * ppm_precursor_tolerance)
-    # if precursor then filter then filter on precursor
-    matches = {}
+    # Save the query spectra
+    sfs = [SearchFragSpectra(searchparam=sfp, mz=mz, ra=ra, query_library='query') for mz, ra in zip(q_mz, q_ra)]
 
-    spms = SPeakMeta.objects.filter((Q(cpeakgroup__cpeakgroupmeta__polarity_id__in=polarities) |
-                                     Q(run__polarity_id__in=polarities)))
+    SearchFragSpectra.objects.bulk_create(sfs)
 
-    if sfp.filter_on_precursor:
-        spms = spms.filter(precursor_mz__lt=target_prec_high,
-                           precursor_mz__gt=target_prec_low)
-    # spms = SPeakMeta.objects.all()
-    if sfp.search_averaged_spectra:
-        spms = spms.filter(spectrum_type__in=['inter', 'intra', 'all'])
+    datasets = Dataset.objects.filter(polarity_id__in=polarities)
 
-    if not spms:
+    # Only keep "animal" DMA datasets not those on metabolite reference standards
+    if not metabolite_reference_standard_filter:
+        datasets = Dataset.objects.filter(metabolite_standard=False)
+
+    dataset_length = len(datasets)
+    # loop through the sqlite pths
+    cnt = 0
+    for dataset in datasets:
+        cnt += 1
         if celery_obj:
-            celery_obj.update_state(state='SUCCESS',
-                                meta={'current': 100, 'total': 100, 'status': 'No matches found'})
-        sr = SearchResult()
-        sr.searchfragparam_id = sp_id
-        sr.matches = False
-        sr.save()
+            celery_obj.update_state(state='RUNNING',
+                                    meta={'current': round(cnt/dataset_length*100.0, 2), 'total': 100,
+                                          'status': 'Spectral matching -- {} of {} datasets -- currently on file {}'.format(
+                                              cnt, dataset_length,
+                                              os.path.basename(dataset.sqlite.path))
+                                          })
 
-        return 0
+        # read in sqlite
+        conn = sqlite3.connect(dataset.sqlite.path)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
 
-    c = 0
-    total_time = len(spms)+1
-    current = 0
-    for spm in spms:
-        if c > 500:
-            if celery_obj:
-                current = current+c
-                celery_obj.update_state(state='RUNNING',
-                                    meta={'current': current,
-                                          'total': total_time,
-                                          'status': 'Spectral matching spectra id {}'.format(spm.id)})
-                print(c)
-                c = 0
+        spectra_type_string = "('" + "', '".join(fragspectratypes) + "')"
 
-        speaks = SPeak.objects.filter(speakmeta=spm).values('mz', 'i')
-        l_mz = np.zeros(len(speaks), dtype='float64')
-        l_i = np.zeros(len(speaks), dtype='float64')
-        if not len(speaks):
-            c += 1
-            continue
+        sql_stmt = """
+              SELECT
+              pid,
+              grpid,
+              spectrum_type,
+              precursor_mz,
+              spm.name AS spectrum_details,
+              (precursor_mz + ((precursor_mz * 0.000001) * {ppm})) AS library_prec_high,
+              (precursor_mz - ((precursor_mz * 0.000001) * {ppm})) AS library_prec_low
+           FROM s_peak_meta AS spm 
+           WHERE spm.spectrum_type IN {st} AND
+           {query_prec_high} >= library_prec_low AND library_prec_high>={query_prec_low}
+           """.format(ppm=ppm_precursor_tolerance, query_prec_low=query_prec_low, query_prec_high=query_prec_high,
+                      st=spectra_type_string)
+        r = c.execute(sql_stmt)
 
-        for i in range(0, len(speaks)):
-            l_mz[i] = speaks[i]['mz']
-            l_i[i] = speaks[i]['i']
+        precursors = [row for row in r]
+        print(precursors)
+        for precursor in precursors:
 
-        l_ra = l_i / l_i.max()
+            pid = precursor['pid']
+            grpid = precursor['grpid']
+            spectrum_type = precursor['spectrum_type']
+            l_prec_mz = precursor['precursor_mz']
+            spectrum_details = precursor['spectrum_details']
 
-        ra_bool = l_ra > ra_threshold
-        l_ra = l_ra[ra_bool]
-        l_mz = l_mz[ra_bool]
+            ppmdiff = 1e6 * (q_prec_mz - l_prec_mz) / l_prec_mz
 
-        dpc = spectral_match(q_mz, l_mz, q_ra, l_ra, ppm_product_tolerance, ra_diff_threshold, weight_mz=2, weight_ra=0.5)
+            r = c.execute("SELECT mz, i, ra FROM s_peaks AS sp WHERE sp.pid=={}".format(pid))
+            l_mz = []
+            l_i = []
 
-        if dpc>dot_product_score_threshold:
-            matches[spm.id] = dpc
-        c+=1
+            for row in r:
+                l_mz.append(row['mz'])
+                l_i.append(row['i'])
 
-    # Get a nice join of the data we want
-    if celery_obj:
-        celery_obj.update_state(state='RUNNING',
-                                meta={'current': current, 'total': total_time, 'status': 'Saving result file'})
+            l_mz = np.array(l_mz)
+            l_i = np.array(l_i)
 
-    vals2extract = ['id',
-                    'precursor_i',
-                    'precursor_mz',
-                    'precursor_rt',
-                    'precursor_scan_num',
-                    'precursor_nearest',
-                    'in_purity',
-                    'spectrum_type',
-                    'cpeakgroup__mzmed',
-                    'cpeakgroup__rtmed',
-                    'cpeakgroup__cpeakgroupmeta',
-                    'cpeakgroup__cpeakgroupmeta__metabinputdata__id',
-                    'cpeakgroup__isotopes',
-                    'cpeakgroup',
-                    'cpeakgroup__cannotation__compound__name',
-                    'cpeakgroup__cannotation__compound__inchikey_id',
-                    'cpeakgroup__cannotation__metfrag_score',
-                    'cpeakgroup__cannotation__probmetab_score',
-                    'cpeakgroup__cannotation__mzcloud_score',
-                    'cpeakgroup__cannotation__sirius_csifingerid_score',
-                    'cpeakgroup__cannotation__sm_score',
-                    'cpeakgroup__cannotation__weighted_score',
-                    'cpeakgroup__cannotation__rank',
-                    'run__mfile__original_filename',
-                    'run__prefix',
-                    'spectralmatching__dpc',
-                    'spectralmatching__name']
+            l_ra = l_i / l_i.max() * 100
+            ra_bool = l_ra > ra_threshold
+            l_ra = l_ra[ra_bool]
+            l_mz = l_mz[ra_bool]
 
-    if sfp.search_averaged_spectra:
-        results = SPeakMeta.objects.filter(
-            pk__in=list(matches)
-        ).values(
-            *vals2extract
-        )
-    else:
-        vals2extract_extra = ['cpeak__rt',
-                              'cpeak___into',
-                              'cpeak__cpeakgroup__mzmed',
-                              'cpeak__cpeakgroup__rtmed',
-                              'cpeak__cpeakgroup__cpeakgroupmeta',
-                              'cpeak__cpeakgroup__cpeakgroupmeta__metabinputdata__id',
-                              'cpeak__cpeakgroup__isotopes',
-                              'cpeak__cpeakgroup',
-                              'cpeak__cpeakgroup__cannotation__compound__name',
-                              'cpeak__cpeakgroup__cannotation__compound__inchikey_id',
-                              'cpeak__cpeakgroup__cannotation__metfrag_score',
-                              'cpeak__cpeakgroup__cannotation__probmetab_score',
-                              'cpeak__cpeakgroup__cannotation__mzcloud_score',
-                              'cpeak__cpeakgroup__cannotation__sirius_csifingerid_score',
-                              'cpeak__cpeakgroup__cannotation__sm_score',
-                              'cpeak__cpeakgroup__cannotation__weighted_score',
-                              'cpeak__cpeakgroup__cannotation__rank',
-                              ] + vals2extract
+            # Extract out the library mz and library intensity
+            # Perform the spectral match
+            dpc = spectral_match(q_mz, l_mz, q_ra, l_ra, ppm_product_tolerance, ra_diff_threshold, weight_mz=2,
+                                 weight_ra=0.5)
 
-        results = SPeakMeta.objects.filter(
-            pk__in=list(matches)
-        ).values(
-            *vals2extract_extra
-        )
+            if dpc >= dot_product_score_threshold:
+                print('match!')
+                ############################
+                # LC-MS averaged match
+                ############################
+                # Get 'lcms' match information (for averaged spectra)
+                if spectrum_type in ['inter', 'intra']:
+                    print('LC-MS average')
+                    sql_stmt = """ 
+                               SELECT 
+                                  ca.grpid, cpg.rt, '' AS sid, ca.inchikey, mc.inchikey1, mc.name, 
+                                  ROUND(ca.wscore,2) AS wscore, '' AS well
+                               FROM combined_annotations AS ca 
+                               LEFT JOIN metab_compound as mc ON mc.inchikey=ca.inchikey 
+                               LEFT JOIN c_peak_groups as cpg ON cpg.grpid=ca.grpid
+                               WHERE ca.grpid=={} AND ca.rank==1 
+                               LIMIT 1
+                               """.format(grpid)
+
+                ############################
+                # LC-MS scan match
+                ############################
+                # Get 'lcms' match information (for individual scan spectra)
+                elif spectrum_type == 'scan':
+                    print('LC-MS scan')
+                    sql_stmt = """
+                                  SELECT 
+                                     ca.grpid, cpg.rt, '' AS sid, ca.inchikey, mc.inchikey1, mc.name, 
+                                     ROUND(ca.wscore,2) AS wscore, '' AS well
+                               FROM combined_annotations AS ca 
+                               LEFT JOIN metab_compound as mc ON mc.inchikey=ca.inchikey 
+                               LEFT JOIN c_peak_groups as cpg ON cpg.grpid=ca.grpid
+                               LEFT JOIN c_peak_X_c_peak_group AS cpXcpg ON cpXcpg.grpid = cpg.grpid
+                               LEFT JOIN c_peaks AS cp ON cp.cid = cpXcpg.cid
+                               LEFT JOIN c_peak_X_s_peak_meta AS cpXspm ON cp.cid = cpXspm.cid
+                               LEFT JOIN s_peak_meta AS spm ON spm.pid = cpXspm.pid
+                               WHERE spm.pid=={} AND ca.rank==1
+                               GROUP BY ca.inchikey
+                               LIMIT 1
+                                """.format(pid)
+                ############################
+                # DIMS match
+                ############################
+                # Get DIMSn match details
+                elif spectrum_type == 'msnpy':
+                    print('msnpy')
+                    sql_stmt = """SELECT '' AS grpid, ca.sid, ca.inchikey,  mc.name, ROUND(ca.wscore,2) AS wscore,
+                                  spm.well, spm.well_rt AS rt
+                            FROM s_peak_meta AS spm1 
+                            LEFT JOIN s_peak_meta_X_s_peaks AS sxs ON spm1.pid=sxs.pid
+                            LEFT JOIN
+                                s_peaks_X_s_peaks AS spXsp ON spXsp.sid2 = sxs.sid
+                            LEFT JOIN s_peaks AS sp ON sp.sid=spXsp.sid1
+                            LEFT JOIN s_peak_meta AS spm ON spm.pid=sp.pid
+                            LEFT JOIN combined_annotations AS ca ON spXsp.sid1=ca.sid
+                            LEFT JOIN metab_compound as mc ON mc.inchikey=ca.inchikey 
+                            WHERE spm1.pid=={} AND ca.rank==1
+                            LIMIT 1
+                           """.format(pid)
+                else:
+                    sql_stmt = ""
+                    continue
+
+                combined = c.execute(sql_stmt)
+
+                summary_details = [row for row in combined]
+
+                # Check if there are any annotations (won't always be the case - due to the combining process and cutoffs)
+                if len(summary_details) == 0:
+                    sid = None
+                    top_annotation = None
+                    top_wscore = None
+                    well = None
+                    rt = None
+                else:
+                    summary_details = summary_details[0]
+                    sid = summary_details['sid']
+
+                    top_annotation = '{} {}'.format(summary_details['inchikey'], summary_details['name'])
+                    top_wscore = summary_details['wscore']
+
+                    well = summary_details['well']
+                    rt = summary_details['rt']
+
+                # Get best spectral match annotation
+                sql_stmt = """SELECT inchikey, library_compound_name, library_source_name, ROUND(dpc, 2) AS dpc
+                                FROM sm_matches AS sm
+                                    WHERE qpid={}
+                                    ORDER BY -dpc
+                                    LIMIT 1
+                                           """.format(pid)
+                sm = c.execute(sql_stmt)
+                summary_spectral_match = [row for row in sm]
+
+                if len(summary_spectral_match) == 0:
+                    top_spectral_match = None
+                else:
+                    summary_spectral_match = summary_spectral_match[0]
+                    top_spectral_match = '{} {} {} {}'.format(summary_spectral_match['inchikey'],
+                                                              summary_spectral_match['library_compound_name'],
+                                                              summary_spectral_match['library_source_name'],
+                                                              summary_spectral_match['dpc']
+                                                              )
+
+                # Get best metfrag annotation
+                if spectrum_type in ['msnpy']:
+                    sql_stmt = """SELECT InChIkey, CompoundName, ROUND(Score, 2) AS score
+                               FROM metfrag_results WHERE pid=={}
+                               LIMIT 1
+                                           """.format(pid)
+                elif spectrum_type in ['inter', 'intra']:
+                    sql_stmt = """SELECT InChIkey, CompoundName, ROUND(Score, 2) AS score
+                                                   FROM metfrag_results WHERE grpid=={}
+                                                   LIMIT 1
+                                                               """.format(pid)
+                else:
+                    sql_stmt = ""
+
+                mf = c.execute(sql_stmt)
+                summary_metfrag_match = [row for row in mf]
+
+                if len(summary_metfrag_match) == 0:
+                    top_metfrag = None
+                else:
+                    summary_metfrag_match = summary_metfrag_match[0]
+                    top_metfrag = '{} {} {}'.format(summary_metfrag_match['inchikey'],
+                                                    summary_metfrag_match['CompoundName'],
+                                                    summary_metfrag_match['score'])
+
+                # Get best sirius annotation
+                if spectrum_type in ['msnpy']:
+                    # Don't have the anem recorded for DIMSn analysis
+                    sql_stmt = """SELECT InChikey2D, '' AS name, rank
+                               FROM sirius_csifingerid_results
+                                WHERE pid=={}
+                                LIMIT 1
+                                           """.format(pid)
+                elif spectrum_type in ['inter', 'intra']:
+                    sql_stmt = """ SELECT InChikey2D, name, rank
+                                    FROM sirius_csifingerid_results
+                                    WHERE grpid=={}
+                                LIMIT 1
+                               """.format(grpid)
+                else:
+                    sql_stmt = ""
+
+                sirius = c.execute(sql_stmt)
+                summary_sirius_match = [row for row in sirius]
+
+                if len(summary_sirius_match) == 0:
+                    top_sirius_csi_fingerid = None
+                else:
+                    summary_sirius_match = summary_sirius_match[0]
+                    top_sirius_csi_fingerid = '{} {} {}'.format(summary_sirius_match['InChikey2D'],
+                                                                summary_sirius_match['name'],
+                                                                summary_sirius_match['rank'])
 
 
-    dirpth = tempfile.mkdtemp()
-    sr = SearchResult()
-    sr.searchfragparam_id = sp_id
-    sr.matches = True
-    fnm = 'frag_search_result.csv'
-    tmp_pth = os.path.join(dirpth, fnm)
-
-    print('RESULTS', results)
-    print(list(matches))
-
-    if matches:
-        with open(tmp_pth, 'w') as csvfile:
-            dwriter = csv.DictWriter(csvfile, fieldnames=['spectral_match_score_user'] + list(results[0]))
-            dwriter.writeheader()
-            for r in results:
-                r['spectral_match_score_user'] = matches[r['id']]
-                dwriter.writerow(r)
-
-        sr.result.save(fnm, File(open(tmp_pth)))
-
-    if celery_obj:
-        celery_obj.update_state(state='SUCCESS',
-                                meta={'current': 100, 'total': 100, 'status': 'completed'})
-
+                sfr = SearchFragResult(searchparam=sfp,
+                                       dpc=np.round(dpc, 4),
+                                       ppm_diff_prec=np.round(ppmdiff,2),
+                                       l_prec_mz=np.round(l_prec_mz, 6),
+                                       q_prec_mz=np.round(q_prec_mz, 6),
+                                       rt=np.round(rt, 3) if rt else None,
+                                       well=well,
+                                       dataset_pid=pid,
+                                       dataset_grpid=grpid if grpid else None,
+                                       dataset_sid=sid if sid else None,
+                                       top_combined_annotation=top_annotation,
+                                       top_spectral_match=top_spectral_match,
+                                       top_sirius_csifingerid=top_sirius_csi_fingerid,
+                                       top_metfrag=top_metfrag,
+                                       top_wscore=top_wscore,
+                                       spectrum_type=spectrum_type,
+                                       spectrum_details=spectrum_details,
+                                       dataset=dataset)
+                sfr.save()
 
 
 def spectral_match(q_mz, l_mz, q_ra, l_ra, ppm_threshold, ra_diff_threshold, weight_mz=2, weight_ra=0.5):
@@ -220,23 +331,22 @@ def spectral_match(q_mz, l_mz, q_ra, l_ra, ppm_threshold, ra_diff_threshold, wei
     return sm_out
 
 
-
 def compare_nan_array(func, a, thresh):
     # https://stackoverflow.com/questions/47340000/how-to-get-rid-of-runtimewarning-invalid-value-encountered-in-greater
     # prevents na warnings (not necessary but just stops people worrying when they see the warnings!)
     out = ~np.isnan(a)
-    out[out] = func(a[out] , thresh)
+    out[out] = func(a[out], thresh)
     return out
 
 
 class AlignTable(object):
     def __init__(self, init_l):
         self.d_table = np.array(init_l, dtype=[('peakID', 'int64'),
-                                              ('mz', 'float64'),
-                                              ('ra', 'float64'),
-                                              ('w', 'float64'),
-                                              ('query', 'bool_')  # True for query False for library
-                                              ])
+                                               ('mz', 'float64'),
+                                               ('ra', 'float64'),
+                                               ('w', 'float64'),
+                                               ('query', 'bool_')  # True for query False for library
+                                               ])
         self.current_peak = 0
         self.query_values = ''
         #
@@ -254,6 +364,7 @@ class AlignTable(object):
         self.query_values = self.d_table[(self.d_table['query'] == True) & (self.d_table['peakID'] >= 0)][type_]
         self.library_values = self.d_table[(self.d_table['query'] == False) & (self.d_table['peakID'] >= 0)][type_]
         return np.array([self.query_values, self.library_values])
+
 
 def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_threshold=10):
     # This approach does not check every possible combination but priortises the most intense peaks to be matched
@@ -288,9 +399,10 @@ def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_thres
     # know the full length of the array yet
     # origin is if the peak is for the query or library
 
-    #init_l = zip(tuple(range(0, q_mz.shape[0])), tuple(q_mz), tuple(q_ra), (True,)*q_mz.shape[0])
+    # init_l = zip(tuple(range(0, q_mz.shape[0])), tuple(q_mz), tuple(q_ra), (True,)*q_mz.shape[0])
 
-    init_l = [(-1, 0, 0, 0, 0)] * ((q_mz.shape[0] + l_mz.shape[0])*2) # biggest array it could be (e.g. no matches at all)
+    init_l = [(-1, 0, 0, 0, 0)] * (
+                (q_mz.shape[0] + l_mz.shape[0]) * 2)  # biggest array it could be (e.g. no matches at all)
     at = AlignTable(init_l=init_l)
 
     lp_remain = np.zeros(l_mz.shape[0])
@@ -308,8 +420,8 @@ def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_thres
         at.add_peak(i, q_mz[i], q_ra[i], q_w[i], True)
 
         # get the associated ppm diff and radiff for this query value compared to the library values
-        ra_i = radiff[i, ]
-        ppm_i = ppmdiff[i, ]
+        ra_i = radiff[i,]
+        ppm_i = ppmdiff[i,]
 
         if (sum(np.isnan(ra_i)) == ra_i.shape[0]) or (np.nanmin(ppm_i) > ppm_threshold):
             # Check if any of these ppm difference are above are threshold or if all nan. If so no library peaks
@@ -320,7 +432,7 @@ def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_thres
             mcount.append('miss')
             continue
 
-        # First check to see if there is a matching intensity value within ra_diff (default 10%)
+        # First check to see if there is a matching mz and intensity value within thresholds
         intenc = ra_i[(compare_nan_array(np.less, ppm_i, ppm_threshold)) &
                       (compare_nan_array(np.less, ra_i, ra_diff_threshold))]
 
@@ -341,22 +453,22 @@ def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_thres
         # and if this peak gets a match first it might miss out on a better match later
 
         lp_remain[bool_] = None
-        ppmdiff[:,bool_] = None
-        radiff[:,bool_] = None
+        ppmdiff[:, bool_] = None
+        radiff[:, bool_] = None
 
     ###################################################
     # Get remaining library values
     ###################################################
     for j in range(0, lp_remain.shape[0]):
         if np.isnan(lp_remain[j]):
-            #already been assigned
+            # already been assigned
             continue
         else:
             # Add peak that was not matched previously
-            at.add_peak(peakID+j, l_mz[j], l_ra[j], l_w[j], False)
+            at.add_peak(peakID + j, l_mz[j], l_ra[j], l_w[j], False)
 
             # add missing values for the query spectra
-            at.add_peak(peakID+j, 0, 0, 0, True)
+            at.add_peak(peakID + j, 0, 0, 0, True)
 
     ###################################################
     # Get the weighted aligned arrays
@@ -364,19 +476,12 @@ def align_peaks(q_mz, l_mz, q_ra, l_ra, q_w, l_w, ppm_threshold=5, ra_diff_thres
     return at.get_aligned_arrays('w')
 
 
-
-
-
 def ppm_error(obs, theo):
-    return abs(1e6*(obs-theo)/float(theo))
+    return abs(1e6 * (obs - theo) / float(theo))
 
 
-
-def cossim(A,B):
-    return( np.sum(A*B) / np.sqrt( np.sum(np.power(A,2)) * np.sum(np.power(B, 2))))
-
-
-
+def cossim(A, B):
+    return (np.sum(A * B) / np.sqrt(np.sum(np.power(A, 2)) * np.sum(np.power(B, 2))))
 
 # def align_peaks_hungarian(q_mz, l_mz, threshold):
 #     # This align peaks approach is based on the 'hungarian method'

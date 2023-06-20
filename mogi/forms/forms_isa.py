@@ -14,6 +14,13 @@ from mogi.models import models_isa
 from mogi.utils.isa_create import check_mapping_details, file_upload_mapping_match
 from mogi.utils.mfile_upload import get_all_suffixes, get_file_namelist, get_mfiles_from_dir, get_pths_from_field
 
+
+class ExportISAForm(forms.ModelForm):
+    class Meta:
+        model = models_isa.ExportISA
+        fields = '__all__'
+
+
 class RunForm(forms.ModelForm):
 
     class Meta:

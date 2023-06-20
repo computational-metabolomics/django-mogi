@@ -5,5 +5,8 @@
     <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
     / <a href="{% url "data_and_results_summary" %}"> data & results summary</a>
 {% endblock sb_admin_breadcrumb %}
-{% block sb_admin_breadcrumb_active %} / Search Fragmentation Spectra {% endblock sb_admin_breadcrumb_active %}
+{% block sb_admin_breadcrumb_active %} / search fragmentation spectra {% endblock sb_admin_breadcrumb_active %}
 {% block panel_title %}Search Parameters{% endblock panel_title %}
+{% block preamble %}
+ <a href="{% url "search_frag_param" %}"><i class="fa fa-list-alt"></i>  RESULTS</a>
+{% endblock preamble %}

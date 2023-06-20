@@ -1,2 +1,2 @@
-To make the templates reuseable we can add a generic base at this level. However a template within the project folder
-e.g. dma_site. Will overide this base.html
+To make the templates re-usable we can add a generic base at this level. However, a template within the project folder
+e.g. dma_site. Will override this base.html

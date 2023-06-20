@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
 
-from django.views.generic import CreateView, View
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import View
+
 from django.shortcuts import render
 
 
 from galaxy.models import Workflow
-from mogi.models import models_isa, models_compounds, models_inputdata
+from mogi.models import models_isa, models_compounds, models_datasets
 
 
 ########################################################################################################################
@@ -15,7 +15,7 @@ from mogi.models import models_isa, models_compounds, models_inputdata
 ########################################################################################################################
 def index(request):
     summary_d = {}
-    summary_d['dataset_nm'] = len(models_inputdata.MetabInputData.objects.all())
+    summary_d['dataset_nm'] = len(models_datasets.Dataset.objects.all())
 
     summary_d['isa_nm'] = len(models_isa.Investigation.objects.all())
 
@@ -23,7 +23,6 @@ def index(request):
 
     # we only have compounds detailed where we have some form of annotation
     summary_d['ann_nm'] = len(models_compounds.Compound.objects.all())
-
 
     return render(request, 'gfiles/index.html', summary_d)
 
@@ -40,7 +39,7 @@ def success(request):
     return render(request, 'mogi/success.html')
 
 
-class DataAndResultsSummaryView(LoginRequiredMixin, View):
+class DataAndResultsSummaryView(View):
     # initial = {'key': 'value'}
     template_name = 'mogi/data_and_results_summary.html'
 

@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 from rest_framework import viewsets
 
 from django_tables2.views import SingleTableMixin
-from django.shortcuts import render
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, AccessMixin
 from django.views.generic import View, ListView
-
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 from galaxy.models import History
 from galaxy.utils.history_actions import get_history_data, init_history_data_save_form, history_data_save_form
 from galaxy.views import (
@@ -25,7 +26,7 @@ from mogi.models import models_galaxy
 from mogi.tables import tables_isa, tables_galaxy
 from mogi.filter import filter_isa
 from mogi.forms import forms_galaxy
-from mogi.tasks import galaxy_isa_upload_datalib_task, upload_metab_results_galaxy_task
+from mogi.tasks import galaxy_isa_upload_datalib_task
 from mogi.serializers import IncomingGalaxyDataSerializer
 from .views_isa import InvestigationListView
 
@@ -54,7 +55,7 @@ class IncomingGalaxyDataListView(LoginRequiredMixin, SingleTableMixin, ListView)
 ##############################################################################################
 # Galaxy ISA uploads and workflows
 ##############################################################################################
-class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
+class GalaxyISAupload(PermissionRequiredMixin, AccessMixin, TableFileSelectMixin, InvestigationListView):
     '''
     '''
     success_msg = "Run started"
@@ -63,6 +64,14 @@ class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
     form_class = forms_galaxy.ISAtoGalaxyParamForm
     template_name = 'mogi/isa_files_to_galaxy.html'
     initial_context = {'library': True, 'django_url': 'galaxy_isa_upload_datalib/'}
+
+    task_string = 'upload ISA projects to Galaxy'
+    permission_required = 'mogi.galaxyisaupload'  # would need to manually create this permission to use
+    redirect_string = 'galaxy_summary'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'User has insufficient privileges to {}'.format(self.task_string))
+        return redirect(self.redirect_string)
 
     def form_valid(self, request, form):
         user = self.request.user
@@ -79,6 +88,7 @@ class GalaxyISAupload(TableFileSelectMixin, InvestigationListView):
         return render(request, 'gfiles/status.html', {'s': 0, 'progress': 0})
 
 
+
 class ISAWorkflowRunView(WorkflowRunView):
     '''
     Run a registered workflow
@@ -93,6 +103,10 @@ class ISAWorkflowRunView(WorkflowRunView):
 
 
 class ISAFileSelectToGalaxyDataLib(FilesToGalaxyDataLib):
+    task_string = 'upload ISA projects to Galaxy'
+    permission_required = 'mogi.galaxyisaupload'  # would need to manually create this permission to use
+    redirect_string = 'galaxy_summary'
+
     table_class = tables_isa.ISAFileSelectTableWithCheckBox
     filterset_class = filter_isa.ISAFileFilter
 
@@ -105,32 +119,6 @@ class ISAFileSelectToGalaxyHist(GenericFilesToGalaxyHistory):
 class ISAWorkflowListView(WorkflowListView):
     table_class = tables_galaxy.WorkflowTableISA
     redirect_to = 'isa_workflow_summary'
-
-
-##############################################################################################
-# Galaxy History data upload to django-metab
-##############################################################################################
-class SaveLcmsFromFromRest(LoginRequiredMixin, View):
-
-
-    def get(self, request, *args, **kwargs):
-        return render(request, 'mogi/confirm_submission.html')
-
-    def post(self, request, *args, **kwargs):
-        galaxy_name = self.kwargs.get('galaxy_name')
-        galaxy_data_id = self.kwargs.get('galaxy_data_id')
-        galaxy_history_id = self.kwargs.get('galaxy_history_id')
-        investigation_name = self.kwargs.get('investigation_name')
-
-        result = upload_metab_results_galaxy_task.delay(request.user.id,
-                                      galaxy_name,
-                                      galaxy_data_id,
-                                      galaxy_history_id,
-                                      investigation_name)
-
-        self.request.session['result'] = result.id
-        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
-
 
 
 

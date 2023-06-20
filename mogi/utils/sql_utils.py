@@ -75,3 +75,33 @@ def check_table_exists_sqlite(cursor, tablename):
 
     return True
 
+
+def filterset_to_sql_stmt(filterset):
+    filters = filterset.filters
+    print(filters.keys())
+    sql_filters = []
+    for row in filterset.data.items():
+        print(row)
+        if row[0] in filters.keys() and row[1]:
+            sql_filters.append(filter_to_sql_stmt(row[0], row[1]))
+
+    if sql_filters:
+        return ' AND ' + ' AND '.join(sql_filters)
+    else:
+        return ''
+
+
+
+def filter_to_sql_stmt(d_filter, val):
+    colnm, comp = d_filter.split('__')
+
+    if comp == 'gt':
+        comp_sql_compat = '>'
+        return '{} {} {}'.format(colnm, comp_sql_compat, val)
+    elif comp == 'lt':
+        comp_sql_compat = '<'
+        return '{} {} {}'.format(colnm, comp_sql_compat, val)
+    elif comp == 'contains':
+        comp_sql_compat = 'LIKE'
+        return '{} {} "%{}%"'.format(colnm, comp_sql_compat, val)
+
