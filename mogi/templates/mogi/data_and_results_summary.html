@@ -24,11 +24,9 @@
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-                       <a href="{% url "search_mz" %}" class="list-group-item"><i>m/z search</i></a>
+<!--                       <a href="{% url "search_mz" %}" class="list-group-item"><i>m/z</i> search</a>-->
+                       <a href="{% url "search_mono" %}" class="list-group-item">Monoisotopic exact mass search</a>
                        <a href="{% url "search_frag" %}" class="list-group-item">Fragmentation search</a>
-                       <a href="#" class="list-group-item">Compound mass search (todo)</a>
-                       <a href="#" class="list-group-item">Compound similarity search (todo)</a>
-                       <a href="{% url "search_results" %}" class="list-group-item">Search results</a>
                     </div>
                 </div>
             </div>
@@ -41,11 +39,8 @@
                 <div class="panel-body">
                    <div class="list-group">
                         <a href="{% url 'mfile_summary' %}" class="list-group-item">Show all metabolomics files</a>
-                        <a href="{% url 'metabinputdata_summary' %}" class="list-group-item">Show all
+                        <a href="{% url 'dataset_summary' %}" class="list-group-item">Show all
                             analysis datasets</a>
-                        <a href="{% url 'combinedpeak_summary_all' %}" class="list-group-item">Show all peaks</a>
-                        <a href="{% url 'combinedannotation_summary_all' %}" class="list-group-item">Show all
-                            annotations</a>
                         <a href="{% url 'compounds' %}" class="list-group-item">Show all compounds</a>
                     </div>
                 </div>
@@ -58,8 +53,8 @@
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-                        <a href="{% url 'incoming_galaxy_data_list' %}" class="list-group-item">Upload dataset from Galaxy </a>
-                        <a href="{% url 'upload_lcms_dataset' %}" class="list-group-item">Upload dataset manually </a>
+                        <a href="{% url 'upload_datasets' %}" class="list-group-item">Upload analysis datasets </a>
+                        <a href="{% url 'upload_compounds' %}" class="list-group-item">Upload compounds </a>
                     </div>
                 </div>
             </div>

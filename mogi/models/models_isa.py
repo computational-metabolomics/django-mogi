@@ -12,8 +12,9 @@ from gfiles.models import GenericFile
 from gfiles.models import data_file_store
 
 
-def json_file_upload(process, filename):
+def isa_file_upload(process, filename):
     return os.path.join('uploads', 'misa', '{}_{}'.format(str(uuid.uuid4()), filename))
+
 
 
 #################################################################################################
@@ -22,7 +23,7 @@ def json_file_upload(process, filename):
 class Run(models.Model):
 
     technical_replicate = models.IntegerField(default=1, null=False)
-    prefix = models.CharField(max_length=400)
+    prefix = models.CharField(max_length=254)
     polaritytype = models.ForeignKey('PolarityType',
                                      null=True, blank=True, on_delete=models.CASCADE)
     assaydetail = models.ForeignKey('AssayDetail',
@@ -49,7 +50,7 @@ class MFile(GenericFile):
     run = models.ForeignKey('Run', on_delete=models.CASCADE,
                             help_text='The instrument run corresponding to this file')
     mfilesuffix = models.ForeignKey(MFileSuffix, on_delete=models.CASCADE)
-    prefix = models.CharField(max_length=300, null=False, blank=False)
+    prefix = models.CharField(max_length=254, null=False, blank=False)
 
 
     def save(self, *args, **kwargs):
@@ -140,7 +141,8 @@ class Investigation(models.Model):
     name = models.CharField(max_length=200, unique=True, null=False, blank=False)
     description = models.TextField(help_text='Investigation description')
     slug = models.SlugField(unique=True, null=False, blank=False)
-    # json_file = models.FileField(upload_to=json_file_upload, blank=True, null=True, max_length=1000)
+    json_file = models.FileField(upload_to=isa_file_upload, blank=True, null=True, max_length=1000)
+    isa_tab_zip = models.FileField(upload_to=isa_file_upload, blank=True, null=True, max_length=1000)
     public = models.BooleanField(default=False,
                                  help_text="If public, then anybody can see this investigation")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -154,6 +156,28 @@ class Investigation(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super(Investigation, self).save(*args, **kwargs)
+
+
+class ExportISA(models.Model):
+
+    investigation = models.ForeignKey(Investigation, on_delete=models.CASCADE, null=False, blank=False)
+    
+    mzml_parse = models.BooleanField(blank=False, null=False, default=False,
+                                        help_text='Parse mzML files to extract metadata information')
+
+    metabolights_compat = models.BooleanField(blank=False, null=False, default=False, 
+                                              verbose_name='MetaboLights compatible ISA export',
+                                        help_text='Export the ISA data in a format that is more easy to incoporate into a'
+                                                  'MetaboLights submission')
+
+    json = models.BooleanField(blank=False, null=False, default=True,
+                                        help_text='Create and save an ISA JSON')
+
+    isatab = models.BooleanField(blank=False, null=False, default=True, verbose_name='ISA-tab zip',
+                                        help_text='Create and save ISA-tab files (in a zip file)')
+
+    def __str__(self):              # __unicode__ on Python 2
+        return '{}'.format(self.id)
 
 
 # Any general files that need to be associated with the investigation

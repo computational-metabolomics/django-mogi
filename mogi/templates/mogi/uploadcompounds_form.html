@@ -1,0 +1,11 @@
+{% extends 'gfiles/simple_form.html' %}
+{% load static %}
+{% block sb_admin_title %}Upload compound annotations{% endblock sb_admin_title %}
+
+{% block sb_admin_breadcrumb %}
+    <a href="{% url "index" %}"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
+    / <a href="{% url "data_and_results_summary" %}"> data & results summary</a>
+{% endblock sb_admin_breadcrumb %}
+{% block sb_admin_breadcrumb_active %} / Upload compound annotations
+{% endblock sb_admin_breadcrumb_active %}
+{% block panel_title %} Upload {% endblock panel_title %}

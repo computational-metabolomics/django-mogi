@@ -5,22 +5,25 @@ from celery import shared_task
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.conf import settings
 
 from galaxy.models import FilesToGalaxyDataLibraryParam
 from gfiles.models import TrackTasks, GenericFile
 
-from mogi.models.models_isa import MFile
-from mogi.models.models_inputdata import MetabInputData
-from mogi.models.models_annotations import CombinedAnnotation
-from mogi.tables.tables_annotations import CombinedAnnotationTable
+from mogi.models.models_isa import MFile, ExportISA
+from mogi.models.models_datasets import UploadDatasets
+from mogi.models.models_compounds import UploadCompounds
 
+
+
+from mogi.utils.isa_export import export_isa_files
 from mogi.utils.isa_create import upload_assay_data_files_dir
 from mogi.utils.mfile_upload import add_runs_mfiles_filelist
 from mogi.utils.msp2db import LibraryData
-from mogi.utils.search_mz_nm import search_mz, search_nm
+from mogi.utils.search_mass import search_mz, search_mono
 from mogi.utils.search_frag import search_frag
-from mogi.utils.download_annotations import DownloadAnnotations
-from mogi.utils.upload_results import UploadResults, setup_results_file_from_galaxy
+from mogi.utils.upload_compounds import upload_compounds
+from mogi.utils.upload_datasets import upload_datasets
 from mogi.utils.upload_isa_to_galaxy import galaxy_isa_upload_datalib
 
 
@@ -38,20 +41,6 @@ def upload_library(self, msp_pth, name):
 
 
 @shared_task(bind=True)
-def search_nm_task(self, sp, userid):
-    # track tasks in db
-    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Search nm values', user_id=userid)
-    tt.save()
-
-    search_nm(sp, self)
-
-    # save successful result
-    tt.result = reverse('search_nm_result')
-    tt.state = 'SUCCESS'
-    tt.save()
-
-
-@shared_task(bind=True)
 def search_mz_task(self, sp, userid):
     # track tasks in db
     tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Search mz values', user_id=userid)
@@ -66,57 +55,67 @@ def search_mz_task(self, sp, userid):
     tt.save()
 
 
+
+@shared_task(bind=True)
+def search_mono_task(self, sp, userid):
+    # track tasks in db
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Search monoisotopic exact mass values', user_id=userid)
+    tt.save()
+
+    # run function
+    search_mono(sp, self)
+
+    # save successful result
+    tt.result = reverse('search_mono_param')
+    tt.state = 'SUCCESS'
+    tt.save()
+
 @shared_task(bind=True)
 def search_frag_task(self, sp, userid):
     # track tasks in db
-    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Search nm values', user_id=userid)
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Search frag values', user_id=userid)
     tt.save()
 
     # run function
     search_frag(sp, self)
 
     # save successful result
-    tt.result = reverse('search_frag_result')
+    tt.result = reverse('search_frag_param')
     tt.state = 'SUCCESS'
     tt.save()
 
 
 @shared_task(bind=True)
-def upload_metab_results_task(self, pk, userid):
+def upload_dataset_task(self, pk, userid):
     # track tasks in db
     tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Data upload', user_id=userid)
     tt.save()
 
     # upload file
-    results = UploadResults(pk, None)
-    
-    # run function  
-    results.upload(celery_obj=self)
-
+    ud = UploadDatasets.objects.get(pk=pk)
+    print(ud)
+    upload_datasets(ud.data_file.path)
     # save successful result
-    tt.result = reverse('metabinputdata_summary')
+    tt.result = reverse('dataset_summary')
     tt.state = 'SUCCESS'
     tt.save()
 
 
 @shared_task(bind=True)
-def download_cannotations_task(self, pk, userid):
+def upload_compounds_task(self, pk, userid):
     # track tasks in db
-    tt = TrackTasks(taskid=self.request.id,
-                    state='RUNNING',
-                    name='Downloading annotations',
-                    user_id=userid)
+    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Data upload', user_id=userid)
     tt.save()
 
-    # perform function
-    dam = DownloadAnnotations()
-    dam.download_cannotations(pk, self)
+    # upload file
+    uc = UploadCompounds.objects.get(pk=pk)
+
+    upload_compounds(uc.data_file.path, settings.ANNOTATION_DETAILS, True, self)
 
     # save successful result
-    tt.result = reverse('canns_download_result')
+    tt.result = reverse('compounds')
     tt.state = 'SUCCESS'
     tt.save()
-
 
 @shared_task(bind=True)
 def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
@@ -132,7 +131,7 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
                             'status': 'Uploading ISA projects to Galaxy'})
     galaxy_isa_upload_param = FilesToGalaxyDataLibraryParam.objects.get(pk=param_pk)
 
-    result_out = galaxy_isa_uplofad_datalib(pks, galaxy_isa_upload_param,
+    result_out = galaxy_isa_upload_datalib(pks, galaxy_isa_upload_param,
                                            galaxy_pass, user_id, self)
 
     if result_out:
@@ -141,73 +140,6 @@ def galaxy_isa_upload_datalib_task(self, pks, param_pk, galaxy_pass, user_id):
 
     # save successful result
     tt.result = reverse('galaxy_summary')
-    tt.state = 'SUCCESS'
-    tt.save()
-
-
-@shared_task(bind=True)
-def upload_metab_results_galaxy_task(self, userid, galaxy_name,
-                                     galaxy_data_id, galaxy_history_id, investigation_name):
-    tt = TrackTasks(taskid=self.request.id, state='RUNNING', name='Data upload', user_id=userid)
-    tt.save()
-
-    md = setup_results_file_from_galaxy(userid,
-                                        galaxy_name,
-                                        galaxy_data_id,
-                                        galaxy_history_id,
-                                        investigation_name,
-                                        self)
-    print('MD {}'.format(md))
-    
-    if not md:
-        tt.result = reverse('metabinputdata_summary')
-        tt.state = 'FAILURE'
-        tt.save()
-        return 0
-
-
-    results = UploadResults(md.id, None)
-    results.upload(celery_obj=self)
-
-
-    # save successful result
-    tt.result = reverse('metabinputdata_summary')
-    tt.state = 'SUCCESS'
-    tt.save()
-
-
-
-    
-
-class DownloadAnnotationsMogi(DownloadAnnotations):
-    annotation_model_class = CombinedAnnotation
-    annotation_table_class = CombinedAnnotationTable
-
-    def get_items(self, cann_down):
-        if cann_down.rank:
-            canns = self.annotation_model_class.objects.filter(cannotation__rank__lte=cann_down.rank)
-        else:
-            canns = self.annotation_model_class.objects.all()
-
-        return canns
-
-
-@shared_task(bind=True)
-def download_cannotations_mogi_task(self, pk, userid):
-    # track tasks in db
-    tt = TrackTasks(taskid=self.request.id,
-                    state='RUNNING',
-                    name='Downloading LC-MSMS annotations',
-                    user_id=userid)
-    tt.save()
-
-    # perform function
-    dam = DownloadAnnotationsMogi()
-    dam.download_cannotations(pk, self)
-
-
-    # save successful result
-    tt.result = reverse('canns_download_result')
     tt.state = 'SUCCESS'
     tt.save()
 
@@ -226,6 +158,30 @@ def upload_assay_data_files_dir_task(self, filelist, user_id, mapping_l, assayid
     upload_assay_data_files_dir(filelist, user_id, mapping_l, assayid, create_assay_details, save_as_link, self)
 
     tt.result = reverse('assayfile_summary', kwargs={'assayid': assayid})
+    tt.state = 'SUCCESS'
+    tt.save()
+
+
+@shared_task(bind=True)
+def export_isa_files_task(self, exportisa_id, user_id):
+    """
+    """
+    users = get_user_model()
+    expisa = ExportISA.objects.get(id=exportisa_id)
+    tt = TrackTasks(taskid=self.request.id,
+                    state='RUNNING',
+                    name='Export ISA files',
+                    user=users.objects.get(pk=user_id))
+    tt.save()
+
+    export_isa_files(expisa.investigation_id,
+                     metabolights_compat=expisa.metabolights_compat, 
+                     extract_mzml_info=expisa.mzml_parse,
+                     export_json=expisa.json,
+                     export_isatab=expisa.isatab,
+                     celery_obj=self)
+
+    tt.result = reverse('ilist')
     tt.state = 'SUCCESS'
     tt.save()
 

@@ -15,7 +15,20 @@ from .tables_general import TABLE_CLASS
 
 
 
-class InvestigationTableUpload(ColumnShiftTable):
+class AdminHideShowMixin:
+    """
+    A mixin to hide and show columns based on if the user is an admin or not
+    """
+
+    def before_render(self, request):
+        admin_only = ['owner', 'delete', 'public', 'update', 'upload', 'created_at', 'updated_at']
+        if request.user.is_superuser:
+            [self.columns.show(i) for i in admin_only if i in self.columns]
+        else:
+            [self.columns.hide(i) for i in admin_only if i in self.columns]
+
+
+class InvestigationTableUpload(AdminHideShowMixin, ColumnShiftTable):
     details = tables.LinkColumn('idetail_tables', text=EYE, args=[A('id')])
 
     check = tables.CheckBoxColumn(accessor="id",
@@ -31,7 +44,7 @@ class InvestigationTableUpload(ColumnShiftTable):
         fields = ('id','name','description', 'details', 'public')
 
 
-class AssayFileTable(ColumnShiftTable):
+class AssayFileTable(AdminHideShowMixin, ColumnShiftTable):
 
     study = tables.Column(accessor='run.assaydetail.assay.study.name',
                                   verbose_name='Study')
@@ -87,7 +100,7 @@ class AssayFileTable(ColumnShiftTable):
         fields = ('id', 'original_filename', 'data_file')
 
 
-class AssayDetailTable(ColumnShiftTable):
+class AssayDetailTable(AdminHideShowMixin, ColumnShiftTable):
 
 
     study = tables.Column(accessor='assay.study.name',
@@ -142,7 +155,7 @@ class AssayDetailTable(ColumnShiftTable):
 
 
 
-class ISAFileSelectTable(ColumnShiftTable):
+class ISAFileSelectTable(AdminHideShowMixin, ColumnShiftTable):
 
     user = tables.Column(accessor='user',
                          verbose_name='user')
@@ -216,7 +229,6 @@ class ISAFileSelectTable(ColumnShiftTable):
         fields = ('id',)
 
 
-
 class ISAFileSelectTableWithCheckBox(ISAFileSelectTable):
 
     check = tables.CheckBoxColumn(accessor="pk",
@@ -239,9 +251,8 @@ class ISAFileSelectTableWithCheckBox(ISAFileSelectTable):
 
 
 
-class InvestigationTable(ColumnShiftTable):
+class InvestigationTable(AdminHideShowMixin, ColumnShiftTable):
     details = tables.LinkColumn('idetail_tables', text='details', args=[A('id')])
-    export = tables.LinkColumn('export_isa_json', text='export', verbose_name='Export ISA-JSON', args=[A('id')])
     update = tables.LinkColumn('iupdate', text='Update', verbose_name='Update', args=[A('id')])
 
     delete = tables.LinkColumn('idelete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -250,16 +261,14 @@ class InvestigationTable(ColumnShiftTable):
         model = models_isa.Investigation
 
         attrs = {"class": TABLE_CLASS}
-        fields = ('id','name','description', 'details', 'update', 'public', 'owner', 'export')
+        fields = ('id','name','description', 'details', 'update', 'public', 'owner', 'json_file')
 
 
-class AssayTable(tables.Table):
+class AssayTable(AdminHideShowMixin, tables.Table):
     upload = tables.LinkColumn('upload_assay_data_files',  text='upload', verbose_name='Upload Assay Data Files', args=[A('id')])
     details = tables.LinkColumn('assaydetail_summary', text='details',verbose_name='Assay details', args=[A('id')])
     files = tables.LinkColumn('assayfile_summary',  text='files', verbose_name='Assay files', args=[A('id')])
     delete = tables.LinkColumn('adelete', text='delete', verbose_name='Delete', args=[A('id')])
-
-
 
     class Meta:
         model = models_isa.Assay
@@ -268,7 +277,7 @@ class AssayTable(tables.Table):
         sequence = ('id', 'name', 'details', 'files', 'upload', 'public', 'owner', 'delete')
 
 
-class OntologyTermTable(ColumnShiftTable):
+class OntologyTermTable(AdminHideShowMixin, ColumnShiftTable):
     add = tables.LinkColumn('add_ontologyterm', text='add', verbose_name='Add Ontology Term',
                                args=[A('c')])
 
@@ -280,7 +289,7 @@ class OntologyTermTable(ColumnShiftTable):
 
 
 
-class OntologyTermTableLocal(ColumnShiftTable):
+class OntologyTermTableLocal(AdminHideShowMixin, ColumnShiftTable):
     update = tables.LinkColumn('update_ontologyterm', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('delete_ontologyterm', text='delete', verbose_name='Delete', args=[A('id')])
 
@@ -290,7 +299,7 @@ class OntologyTermTableLocal(ColumnShiftTable):
         template = 'django_tables2/bootstrap.html'
 
 
-class ExtractionProtocolTable(tables.Table):
+class ExtractionProtocolTable(AdminHideShowMixin, tables.Table):
     ontology_terms = tables.Column(accessor='all_ontologyterms', verbose_name='Ontology terms')
     extractiontype = tables.LinkColumn('et_list', verbose_name='Type')
     update = tables.LinkColumn('ep_update', text='update', verbose_name='Update', args=[A('id')])
@@ -301,7 +310,7 @@ class ExtractionProtocolTable(tables.Table):
 
 
 
-class ExtractionTypeTable(tables.Table):
+class ExtractionTypeTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('et_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('et_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -311,7 +320,7 @@ class ExtractionTypeTable(tables.Table):
         fields = ('id', 'type', 'description', 'all_ontologyterms')
 
 
-class SpeProtocolTable(tables.Table):
+class SpeProtocolTable(AdminHideShowMixin, tables.Table):
     ontology_terms = tables.Column(accessor='all_ontologyterms', verbose_name='Ontology terms')
     spetype = tables.LinkColumn('spet_list', verbose_name='Type')
     update = tables.LinkColumn('spep_update', text='update', verbose_name='Update', args=[A('id')])
@@ -322,7 +331,7 @@ class SpeProtocolTable(tables.Table):
 
 
 
-class SpeTypeTable(tables.Table):
+class SpeTypeTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('spet_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('spet_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -332,7 +341,7 @@ class SpeTypeTable(tables.Table):
         fields = ('id', 'type', 'description', 'all_ontologyterms')
 
 
-class ChromatographyProtocolTable(tables.Table):
+class ChromatographyProtocolTable(AdminHideShowMixin, tables.Table):
     ontology_terms = tables.Column(accessor='all_ontologyterms', verbose_name='Ontology terms')
     chromatographytype = tables.LinkColumn('ct_list', verbose_name='Type')
     update = tables.LinkColumn('cp_update', text='update', verbose_name='Update', args=[A('id')])
@@ -343,7 +352,7 @@ class ChromatographyProtocolTable(tables.Table):
         template = 'django_tables2/bootstrap.html'
 
 
-class ChromatographyTypeTable(tables.Table):
+class ChromatographyTypeTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('ct_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('ct_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -353,7 +362,7 @@ class ChromatographyTypeTable(tables.Table):
         fields = ('id', 'type', 'description', 'all_ontologyterms', 'owner', 'public')
 
 
-class MeasurementProtocolTable(tables.Table):
+class MeasurementProtocolTable(AdminHideShowMixin, tables.Table):
     ontology_terms = tables.Column(accessor='all_ontologyterms', verbose_name='Ontology terms')
     measurementtechnique = tables.LinkColumn('mt_list', verbose_name='Technique')
     update = tables.LinkColumn('mp_update', text='update', verbose_name='Update', args=[A('id')])
@@ -363,7 +372,7 @@ class MeasurementProtocolTable(tables.Table):
         attrs = {"class": TABLE_CLASS}
 
 
-class MeasurementTechniqueTable(tables.Table):
+class MeasurementTechniqueTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('mt_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('mt_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -373,7 +382,7 @@ class MeasurementTechniqueTable(tables.Table):
         fields = ('id', 'type', 'description', 'all_ontologyterms')
 
 
-class SampleCollectionProtocolTable(tables.Table):
+class SampleCollectionProtocolTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('scp_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('scp_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -382,7 +391,7 @@ class SampleCollectionProtocolTable(tables.Table):
         attrs = {"class": TABLE_CLASS}
 
 
-class DataTransformationProtocolTable(tables.Table):
+class DataTransformationProtocolTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('dtp_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('dtp_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -398,7 +407,7 @@ class MarkSafeLinkColumn(tables.LinkColumn):
 
 
 
-class StudySampleTable(tables.Table):
+class StudySampleTable(AdminHideShowMixin, tables.Table):
 
     investigation = tables.Column(accessor='study.investigation.name', verbose_name='Investigation')
     study = tables.Column(accessor='study.name', verbose_name='Study')
@@ -418,7 +427,7 @@ class StudySampleTable(tables.Table):
                   'update', 'delete', 'public')
 
 
-class StudyFactorTable(tables.Table):
+class StudyFactorTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('sfupdate', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('sfdelete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -429,7 +438,7 @@ class StudyFactorTable(tables.Table):
 
 
 
-class OrganismTable(tables.Table):
+class OrganismTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('org_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('org_delete', text='delete', verbose_name='Delete', args=[A('id')])
@@ -438,7 +447,7 @@ class OrganismTable(tables.Table):
         attrs = {"class": TABLE_CLASS}
 
 
-class OrganismPartTable(tables.Table):
+class OrganismPartTable(AdminHideShowMixin, tables.Table):
 
     update = tables.LinkColumn('orgpart_update', text='update', verbose_name='Update', args=[A('id')])
     delete = tables.LinkColumn('orgpart_delete', text='delete', verbose_name='Delete', args=[A('id')])

@@ -16,12 +16,19 @@ a:hover {
 /* selected link */
 a:active {
   color: #00004D;
-} 
+  font-weight:normal;
+}
+
+ /* dark background links */
+a.darkback:link { color: #999;}
+a.darkback:visited {color: #6d4b8d; }
+a.darkback:hover { color: #ffffff;}
+a.darkback:active { color: #ff4040; font-weight:normal;}
 
 
 .view-details {
   font-size: larger;
-  color: #000000;  
+  color: #000000;
 }
 
 .panel-red {
@@ -81,7 +88,7 @@ a:active {
 
 .panel-green > a {
     color: #5A8059;
-    
+
 
 }
 

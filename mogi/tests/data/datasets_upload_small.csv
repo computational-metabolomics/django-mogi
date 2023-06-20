@@ -1,0 +1,4 @@
+"assay","galaxy_history_url","sqlite","tsv","fractionation","metabolite_standard","polarity"
+"APOL_AMP_1_C30_MSM_NEG","https://dma.galaxy.bham.ac.uk/u/lawsontn/h/apolamp1c30msmneg","/home/tomnl/data/POL_WAX_1_PHE_POS.sqlite","/home/tomnl/data/POL_WAX_1_PHE_POS.tsv",TRUE,FALSE,"positive"
+"POL_WAX_2_PHE_NEG","https://dma.galaxy.bham.ac.uk/u/lawsontn/h/polwax2pheneg-1","/home/tomnl/data/POL_WAX_1_PHE_POS.sqlite","/home/tomnl/data/POL_WAX_1_PHE_POS.tsv",TRUE,FALSE,"positive"
+"POL_WAX_2_PHE_POS","https://dma.galaxy.bham.ac.uk/u/lawsontn/h/polwax2phepos-1","/home/tomnl/data/POL_WAX_1_PHE_POS.sqlite","/home/tomnl/data/POL_WAX_1_PHE_POS.tsv",FALSE,TRUE,"positive"

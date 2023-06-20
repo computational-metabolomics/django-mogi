@@ -4,12 +4,12 @@ from mogi.views import (
     views_general,
     views_isa,
     views_galaxy,
-    views_peaks,
-    views_annotations,
-    views_libraries,
     views_search,
     views_compounds,
-    views_inputdata
+    views_datasets,
+    views_peaks,
+    views_annotations,
+
 )
 
 from mogi.models.models_isa import OntologyTerm
@@ -31,73 +31,43 @@ urlpatterns = [
         name='data_and_results_summary'),
 
     #############################################
-    # Input data
+    # Datasets
     ##############################################
-    url('^upload_lcms_dataset/$', views_inputdata.UploadMetabResults.as_view(), name='upload_lcms_dataset'),
-    url('^update_metabinputdata/(?P<pk>\d+)$', views_inputdata.MetabInputDataUpdateView.as_view(), name='update_metabinputdata'),
-
-    url('^metabinputdata_summary/$', views_inputdata.MetabInputDataListView.as_view(), name='metabinputdata_summary'),
-
+    url('^upload_datasets/$', views_datasets.UploadDatasetsView.as_view(), name='upload_datasets'),
+    url('^dataset_summary/$', views_datasets.DatasetListView.as_view(), name='dataset_summary'),
 
     #############################################
     # Peaks
     ##############################################
-    # Combined peaks
-    url('^combinedpeak_summary_all/$', views_peaks.CombinedPeakAllListView.as_view(), name='combinedpeak_summary_all'),
-    url('^combinedpeak_summary/(?P<mid>\d+)$', views_peaks.CombinedPeakListView.as_view(), name='combinedpeak_summary'),
-
-    url('^frag4combinedpeak/(?P<cid>\d+)$', views_peaks.Frag4CombinedPeakListView.as_view(),
-        name='frag4combinedpeak'),
-
-    url('^speak_plot/(?P<sid>[\d/]+)$', views_peaks.SPeakPlotView.as_view(), name='speak_plot'),
-
-    # Chromatography peaks
-    url('^eics/(?P<cgid>.+)$', views_peaks.EicListView.as_view(), name='eics'),
-
-
-    #############################################
-    # Annotation
-    ##############################################
-    url('^canns/(?P<cid>\d+)$', views_annotations.CombinedAnnotationListView.as_view(), name='canns'),
-    url('^canns_all/$', views_annotations.CombinedAnnotationListAllView.as_view(),
-        name='combinedannotation_summary_all'),
-    url('^canns_download/$', views_annotations.CombinedAnnotationDownloadView.as_view(), name='canns_download'),
-    url('^canns_download_result/$', views_annotations.CombinedAnnotationDownloadResultView.as_view(),
-        name='canns_download_result'),
-
-    url('^cpeakgroup_spectral_matching_summary/(?P<cgid>\d+)$',
-        views_annotations.CPeakGroupSpectralMatchingListView.as_view(),
-        name='cpeakgroup_spectral_matching_summary'),
-
-    url('^annotation_further/(?P<cid>\d+)/(?P<inchikey>\D+)/$',
-        views_annotations.MetaboliteAnnotationListView.as_view(),
-        name='annotation_further'),
-
-    url('^metabolite_annotation_details/(?P<maid>\d+)/$',
-        views_annotations.MetaboliteAnnotationDetailsListView.as_view(),
-        name='metabolite_annotation_details'),
-
-    url('^smatch/(?P<spmid>\d+)$', views_annotations.SMatchView.as_view(), name='smatch'),
-    url('^upload_adduct_rules/$', views_annotations.UploadAdductRules.as_view(), name='upload_adduct_rules'),
+    url('^eics/(?P<did>.+)/(?P<grpid>.+)/$', views_peaks.EicView.as_view(), name='eics'),
+    url('^speaks/(?P<did>.+)/(?P<grpid>.+)/(?P<sid>.+)/$', views_peaks.SPeakView.as_view(), name='speaks'),
 
     #############################################
     # Compound
     ##############################################
     url('^compounds/$', views_compounds.CompoundListView.as_view(), name='compounds'),
-
+    url('^upload_compounds/$', views_compounds.UploadCompounds.as_view(), name='upload_compounds'),
 
     #############################################
-    # Libraries
+    # Annotations
     ##############################################
-    url('^library_upload/$', views_libraries.LibrarySpectraSourceCreateView.as_view(), name='library_upload'),
+    url('^canns/(?P<did>\d+)/$', views_annotations.CombinedAnnotationListView.as_view(), name='canns'),
+    url('^canns_sm/(?P<did>\d+)/(?P<grpid>.+)/(?P<sid>.+)/(?P<inchikey>.+)$', views_annotations.SpectralMatchingListView.as_view(), name='canns_sm'),
+    url('^canns_metfrag/(?P<did>\d+)/(?P<grpid>.+)/(?P<sid>.+)/(?P<inchikey>.+)$', views_annotations.MetFragListView.as_view(), name='canns_metfrag'),
+    url('^canns_sirius/(?P<did>\d+)/(?P<grpid>.+)/(?P<sid>.+)/(?P<inchikey>.+)$', views_annotations.SiriusCSIFingerIDListView.as_view(), name='canns_sirius'),
+    url('^smplot/(?P<did>\d+)/(?P<qpid>\d+)/(?P<lpid>\d+)$', views_annotations.SMPlotView.as_view(), name='smplot'),
 
     #############################################
     # Search
     ##############################################
     url('^search_frag/$', views_search.SearchFragParamCreateView.as_view(), name='search_frag'),
+    url('^search_frag_param/$', views_search.SearchFragParamListView.as_view(), name='search_frag_param'),
+    url('^search_frag_results/(?P<spid>\d+)/$', views_search.SearchFragResultListView.as_view(), name='search_frag_results'),
+    url('^search_frag_annotations/(?P<sfid>\d+)/$', views_search.SearchFragResultAnnotationListView.as_view(), name='search_frag_annotations'),
     url('^search_mz/$', views_search.SearchMzParamCreateView.as_view(), name='search_mz'),
-    url('^search_nm/$', views_search.SearchNmParamCreateView.as_view(), name='search_nm'),
-    url('^search_results/$', views_search.SearchResultListView.as_view(), name='search_results'),
+    url('^search_mono/$', views_search.SearchMonoParamCreateView.as_view(), name='search_mono'),
+    url('^search_mono_param/$', views_search.SearchMonoParamListView.as_view(), name='search_mono_param'),
+    url('^search_mono_results/(?P<spid>\d+)/$', views_search.SearchMonoResultListView.as_view(), name='search_mono_results'),
 
     # Autocomplete urls (not currently used)
     # url('mfile_multi_summary/', views.MFileListMultiView.as_view(), name='mfile_multi_summary'),
@@ -213,7 +183,7 @@ urlpatterns = [
     url(r'^dp_delete/(?P<pk>[\w]+)/$', views_isa.DataTransformationProtocolDeleteView.as_view(), name='dp_delete'),
 
     # ISA export
-    url(r'^export_isa_json/(?P<pk>\d+)/$', views_isa.ISAJsonExport.as_view(), name='export_isa_json'),
+    url(r'^export_isa/$', views_isa.ExportISACreateView.as_view(), name='export_isa'),
 
     # Investigation
     url(r'^icreate/$', views_isa.InvestigationCreateView.as_view(), name='icreate'),
@@ -284,9 +254,4 @@ urlpatterns = [
     # Galaxy and REST
     ##############################################
     url(r'^rest/', include(router.urls)),
-    url(r'^incoming_galaxy_data_list/$', views_galaxy.IncomingGalaxyDataListView.as_view(),
-        name='incoming_galaxy_data_list'),
-    url(
-        r'^save_lcms_from_from_rest/(?P<galaxy_name>[-\w]+)/(?P<galaxy_data_id>\w+)/(?P<galaxy_history_id>\w+)/(?P<investigation_name>[-\w]+)/$',
-        views_galaxy.SaveLcmsFromFromRest.as_view(), name='save_lcms_from_from_rest')
 ]

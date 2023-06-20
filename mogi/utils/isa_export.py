@@ -4,80 +4,48 @@ import zipfile
 import os
 import json
 from django.contrib.auth.models import User
+from django.db.models import F
 from django import forms
-
-from mogi.models.models_isa import Investigation
+from collections import defaultdict
+from mzml2isa import mzml
+import tempfile
+import shutil
+from mogi.models.models_compounds import Compound
+from mogi.models.models_isa import Investigation, MFile
 from isatools import model as itm
+from isatools import isatab
 from isatools.isajson import ISAJSONEncoder
+from django.core.files.base import ContentFile, File
 import six
+import pandas as pd
 
-def add_lcms_untargeted_meta(itm_i, itm_s, msms_performed=True):
-    obi = itm.OntologySource(name='CHMO', description="Chemical Methods Ontology")
-    itm_i.ontology_source_references.append(obi)
-    uplcms = itm.OntologyAnnotation(term_source=obi)
-    uplcms.term = "ultra-performance liquid chromatography-mass spectrometry"
-    uplcms.term_accession = "http://purl.obolibrary.org/obo/CHMO_0000715"
-    itm_s.design_descriptors.append(uplcms)
+def init_ontology_sources(itm_i):
+    ontology_sources = [
+                        itm.OntologySource(name='CHMO', file='http://purl.obolibrary.org/obo/chmo.owl', description="Chemical Methods Ontology"),
+                        itm.OntologySource(name='MS', file=' http://purl.obolibrary.org/obo/ms.owl', description="Mass spectrometry ontology"),                       
+                        itm.OntologySource(name='SIO', file=' http://semanticscience.org/ontology/sio.owl', description="Semanticscience Integrated Ontology"),                       
+                        itm.OntologySource(name='OBI', file='http://purl.obolibrary.org/obo/obi.owl', description="Ontology for Biomedical Investigations"),
+                        itm.OntologySource(name='CHEBI', file='http://purl.obolibrary.org/obo/chebi.owl', description="Chemical Entities of Biological Interest"),
+                        itm.OntologySource(name='NCIT', file='http://purl.obolibrary.org/obo/ncit.owl', description="NCI Thesaurus OBO Edition"),
+                        itm.OntologySource(name='NCBITAXON', file='http://purl.obolibrary.org/obo/ncit.owl', description="NCI Thesaurus OBO Edition"),
+                        itm.OntologySource(name='CHEMINF', file='http://semanticchemistry.github.io/semanticchemistry/ontology/cheminf.owl', description="chemical information ontology (cheminf) - information entities about chemical entities"),
+                        itm.OntologySource(name='AFO', file='http://purl.obolibrary.org/obo/afo.owl', description="Allotrope Merged Ontology Suite"),
+                        itm.OntologySource(name='OMIT', file=' http://purl.obolibrary.org/obo/omit.owl', description="Ontology for MIRNA Target"), 
+                        ]
+    itm_i.ontology_source_references.extend(ontology_sources)
 
-    if msms_performed:
-        msms = itm.OntologyAnnotation(term_source=obi)
-        msms.term = "tandem mass spectrometry"
-        msms.term_accession = "http://purl.obolibrary.org/obo/CHMO_0000575"
-        itm_s.design_descriptors.append(msms)
-
-    untargeted_met = itm.OntologyAnnotation()
-    untargeted_met.term = "untargeted metabolites"
-    itm_s.design_descriptors.append(untargeted_met)
-
-    return itm_i, itm_s
+    return itm_i
 
 
-def add_organism_details(itm_i, itm_s, dj_organism):
-    ncbitaxon = itm.OntologySource(name='NCBITaxon', description="NCBI Taxonomy")
-    itm_i.ontology_source_references.append(ncbitaxon)
-    organism = itm.OntologyAnnotation(term_source=ncbitaxon)
-    organism.term = dj_organism.ontology_term
-    organism.term_accession = dj_organism.ontology_accession
-    itm_s.design_descriptors.append(organism)
-
-    return organism
-
-
-def add_organism_sample(dj_ss):
-    if dj_ss.organism:
-        dj_org_ont = dj_ss.organism.ontologyterm
-        src =  itm.OntologySource(name=dj_org_ont.ontology_prefix,
-                                  description=dj_org_ont.ontology_name)
-        val = itm.OntologyAnnotation(term=dj_org_ont.name,
-                                     term_source=src,
-                                     term_accession=dj_org_ont.iri)
+def extract_parameter_value_mzml(mzmlf, name, itm_pparams, itm_i, section='meas', value=False):
+    if not value:
+        return(itm.ParameterValue(itm_pparams[section][name], 
+                              itm.OntologyAnnotation(term=mzmlf.metadata[name]['name'],
+                                                     term_source=check_ontology_source(itm_i, mzmlf.metadata[name]['ref']),
+                                                     term_accession=mzmlf.metadata[name]['accession']
+                                             )))
     else:
-
-        val = itm.OntologyAnnotation(term='',  term_source='', term_accession='')
-
-    return itm.Characteristic(category=itm.OntologyAnnotation(term="Organism",
-                                                              term_source="NCIT",
-                                                              term_accession="http://purl.obolibrary.org/obo/NCIT_C14250"),
-                                                              value=val)
-
-
-def add_organism_part_sample(dj_ss):
-    if dj_ss.organism_part:
-        dj_org_ont = dj_ss.organism_part.ontologyterm
-        src =  itm.OntologySource(name=dj_org_ont.ontology_prefix,
-                                  description=dj_org_ont.ontology_name)
-        val = itm.OntologyAnnotation(term=dj_org_ont.name,
-                                     term_source=src,
-                                     term_accession=dj_org_ont.iri)
-    else:
-        val = itm.OntologyAnnotation(term='',  term_source='', term_accession='')
-
-    return itm.Characteristic(category=itm.OntologyAnnotation(term="Organism part",
-                                                              term_source="NCIT",
-                                                              term_accession="http://purl.obolibrary.org/obo/NCIT_C103199"),
-                                                              value=val)
-
-
+        return(itm.ParameterValue(itm_pparams[section][name], mzmlf.metadata[name]['value']))
 
 
 def check_ontology_source(itm_i, query_source_name):
@@ -85,10 +53,30 @@ def check_ontology_source(itm_i, query_source_name):
     for ionts in itm_i.ontology_source_references:
         if ionts.name==query_source_name:
             ont_source=ionts
+            break
+
+    if not ont_source:
+        ont_source = itm.OntologySource(name=query_source_name)
+        itm_i.ontology_source_references.append(ont_source)
+
     return ont_source
 
 
-def export_isa_files(investigation_id):
+def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_info=True, export_json=True, export_isatab=True, celery_obj=''):
+
+    if celery_obj:
+        celery_obj.update_state(state='RUNNING',
+                                            meta={'current': 0, 'total':  100,
+                                                  'status': 'Setup of investigation and study files'})
+        
+    
+    
+    # Save ISA-Tab zip
+    if export_isatab:
+        tmpdir = tempfile.mkdtemp()
+        isa_temp_dir = os.path.join(tmpdir, 'isa')
+        os.makedirs(isa_temp_dir, exist_ok=True)
+   
 
     # Create investigation
     dj_i = Investigation.objects.get(pk=investigation_id)
@@ -96,6 +84,8 @@ def export_isa_files(investigation_id):
     itm_i.identifier = "i1"
     itm_i.title = dj_i.name
     itm_i.description = dj_i.description
+
+    itm_i = init_ontology_sources(itm_i)
 
 
     ################################################################################################################
@@ -115,45 +105,48 @@ def export_isa_files(investigation_id):
 
         itm_i.studies.append(itm_s)
 
-        itm_i, itm_s = add_lcms_untargeted_meta(itm_i, itm_s, msms_performed=True)
-
-        # Add study samples
-        # loop through the study samples
+        chmo = check_ontology_source(itm_i, 'CHMO')        
+        itm_s.design_descriptors.extend([
+                            itm.OntologyAnnotation(term_source=chmo,term = "ultra-performance liquid chromatography-mass spectrometry",
+                                                   term_accession = "http://purl.obolibrary.org/obo/CHMO_0000715"),
+                            itm.OntologyAnnotation(term_source=chmo, term="tandem mass spectrometry",
+                                      term_accession="http://purl.obolibrary.org/obo/CHMO_0000575"),
+                            itm.OntologyAnnotation(term = "untargeted metabolites"),            
+        ])
 
         ################################################################################################################
         # STUDY SAMPLES
         ################################################################################################################
+        #if metabolights_compat:
+        material_source = itm.Source(name='DMA source')
+        itm_s.sources.append(material_source)
+
         for j, dj_ss in enumerate(dj_s.studysample_set.all()):
-            # We are saying that each sample is derived from a different source material, this might not be true for
-            # for all cases but should be fine for the resulting ISA-Tab structure for MetaboLights
-            source = itm.Source(name='{} source'.format(dj_ss.sample_name))
-            itm_s.sources.append(source)
+            #if not metabolights_compat:
+            #    source = itm.Source(name='{} source'.format(dj_ss.sample_name))
+            #    itm_s.sources.append(source)
 
             # Sample material from the source
-            itm_sample = itm.Sample(name=dj_ss.sample_name, derives_from=source)
+            itm_sample = itm.Sample(name=dj_ss.sample_name, derives_from=[material_source])
 
             #=====================
             # Add organism for sample
             #=====================
             if dj_ss.organism:
                 dj_org_ont = dj_ss.organism.ontologyterm
-                source = check_ontology_source(itm_i, dj_org_ont.ontology_name)
-                if not source:
-                    source = itm.OntologySource(name=dj_org_ont.ontology_prefix,
-                                         description=dj_org_ont.ontology_name)
-                    itm_i.ontology_source_references.append(source)
+                ont_source = check_ontology_source(itm_i, dj_org_ont.ontology_prefix)
 
                 val = itm.OntologyAnnotation(term=dj_org_ont.name,
-                                             term_source=source,
+                                             term_source=ont_source,
                                              term_accession=dj_org_ont.iri)
             else:
 
                 val = itm.OntologyAnnotation(term='', term_source='', term_accession='')
 
             char =  itm.Characteristic(category=itm.OntologyAnnotation(term="Organism",
-                                                                      term_source="NCIT",
+                                                                      term_source= check_ontology_source(itm_i, 'NCIT'),
                                                                       term_accession="http://purl.obolibrary.org/obo/NCIT_C14250"),
-                                      value=val)
+                                       value=val)
             itm_sample.characteristics.append(char)
 
             # =====================
@@ -162,11 +155,7 @@ def export_isa_files(investigation_id):
             if dj_ss.organism_part:
                 dj_org_ont = dj_ss.organism_part.ontologyterm
 
-                source = check_ontology_source(itm_i, dj_org_ont.ontology_name)
-                if not source:
-                    source = itm.OntologySource(name=dj_org_ont.ontology_prefix,
-                                         description=dj_org_ont.ontology_name)
-                    itm_i.ontology_source_references.append(source)
+                source = check_ontology_source(itm_i, dj_org_ont.ontology_prefix)
 
                 val = itm.OntologyAnnotation(term=dj_org_ont.name,
                                              term_source=source,
@@ -194,7 +183,7 @@ def export_isa_files(investigation_id):
         # Create sample collection protocol (we just use 1 for all samples for the time being) but should technically
         # be divided into groups (if resulting ISA-Tab for MetaboLights is the same then we can just leave as is)
         sample_collection_protocol = itm.Protocol(name="sample collection",
-                                                      protocol_type=itm.OntologyAnnotation(term="sample collection"))
+                                                    protocol_type=itm.OntologyAnnotation(term="sample collection",))
         itm_s.protocols.append(sample_collection_protocol)
         sample_collection_process = itm.Process(executes_protocol=sample_collection_protocol)
 
@@ -225,6 +214,8 @@ def export_isa_files(investigation_id):
             'meas':{}
         }
 
+
+
         for dj_a in dj_s.assay_set.all():
             for dj_ad in dj_a.assaydetail_set.all():
                 ex = dj_ad.extractionprocess.extractionprotocol
@@ -247,90 +238,189 @@ def export_isa_files(investigation_id):
             'meas': {}
         }
 
-        # sequencing_protocol = itm.Protocol(name='sequencing', protocol_type=itm.OntologyAnnotation(term="material sequencing"))
-        # itm_s.protocols.append(sequencing_protocol)
+        itm_pparams = {
+            'ex':{},
+            'spe':{},
+            'chr':{},
+            'meas':{}
+        }
 
+        #===========================================
+        # Get Extraction protocols
+        #===========================================
+        itm_pparams['ex']['Derivatization'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Derivatization", term_source=check_ontology_source(itm_i, 'CHMO'),
+                                                                    term_accession='http://purl.obolibrary.org/obo/CHMO_0001485'))
+        itm_pparams['ex']['Post Extraction'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Post Extraction"))    
+        if not metabolights_compat:
+            # Only one extraction protocol for Metabolights
+            extraction_protocol = itm.Protocol(name='Extraction',
+                                                protocol_type=itm.OntologyAnnotation(term="Extraction"),
+                                                )  
 
-
-        for k, dj_ex in six.iteritems(dj_p['ex']):
-
-            if dj_ex.name:
-                nm = dj_ex.name
-            else:
-                nm = dj_ex.extractiontype.type
-
-
-            #===========================================
-            # Get extraction protocols
-            #===========================================
-            source = check_ontology_source(itm_i, 'CHMO')
-            extraction_protocol = itm.Protocol(name='Extraction {}'.format(nm),
-                                               protocol_type=itm.OntologyAnnotation(term="Extraction"),
-                                               )
-
-            param = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Derivatization", term_source=source,
-                                                                 term_accession='http://purl.obolibrary.org/obo/CHMO_0001485'))
-            extraction_protocol.parameters.append(param)
+            extraction_protocol.parameters.extend(itm_pparams['ex'].values())
 
             itm_s.protocols.append(extraction_protocol)
+            for k, dj_ex in six.iteritems(dj_p['ex']):
+                itm_p['ex'][k] = extraction_protocol
+        
+        else:
+            for k, dj_ex in six.iteritems(dj_p['ex']):
 
-            itm_p['ex'][k] = extraction_protocol
+                extraction_protocol = itm.Protocol(name='Extraction ({})'.format(dj_ex.code_field),
+                                                protocol_type=itm.OntologyAnnotation(term="Extraction"),
+                                                description=dj_ex.name
+                                                )  
 
-        for k, dj_spe in six.iteritems(dj_p['spe']):
-            if dj_spe.name:
-                nm = dj_spe.name
-            else:
-                nm = dj_spe.spetype.type
+                extraction_protocol.parameters.extend(itm_pparams['ex'].values())
 
-            #===========================================
-            # Get chromatography protocols
-            #===========================================
-            spe_protocol = itm.Protocol(name='Solid Phase Extraction {}'.format(nm),
-                                        protocol_type=itm.OntologyAnnotation(term="Solid Phase Extraction"),
-                                        components=itm.OntologyAnnotation(term=nm),
-                                        description=dj_spe.description
-                                        )
-            itm_s.protocols.append(spe_protocol)
-            itm_p['spe'][k] = spe_protocol
+                itm_s.protocols.append(extraction_protocol)
+
+                itm_p['ex'][k] = extraction_protocol
 
 
 
-        for k, dj_chr in six.iteritems(dj_p['chr']):
+        #===========================================
+        # Get SPE protocols
+        #===========================================
+        if not metabolights_compat:
+            # MetaboLights doesn't record SPE details
+            for k, dj_spe in six.iteritems(dj_p['spe']):
+                spe_protocol = itm.Protocol(name='Solid Phase Extraction ({})'.format(dj_spe.code_field),
+                                            protocol_type=itm.OntologyAnnotation(term="Solid Phase Extraction"),
+                                            #components=[itm.OntologyAnnotation(term='')],  # this does not work with isa dump to isa tab
+                                            description=dj_spe.name
+                                            )
+                itm_s.protocols.append(spe_protocol)
+                itm_p['spe'][k] = spe_protocol
 
-            #===========================================
-            # Get chromatography protocols
-            #===========================================
-            chromatography_protocol = itm.Protocol(name='Chromatography {}'.format(dj_chr.name),
-                                                   protocol_type=itm.OntologyAnnotation(term="Chromatography"))
 
+        #===========================================
+        # Get chromatography protocols
+        #===========================================
+        itm_pparams['chr']['Chromatography instrument']= itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Chromatography instrument", term_source=check_ontology_source(itm_i, 'OBI'),
+                                            term_accession='http://purl.obolibrary.org/obo/OBI_0000485'))
+            
+        itm_pparams['chr']['Autosampler model'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Autosampler model"))
+        itm_pparams['chr']['Column model'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Column model"))
+        itm_pparams['chr']['Column type'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Column type"))
+        itm_pparams['chr']['Guard column'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Guard column"))
+
+        if not metabolights_compat:
+            for k, dj_chr in six.iteritems(dj_p['chr']):
+
+
+                chromatography_protocol = itm.Protocol(name='Chromatography ({})'.format(dj_chr.code_field), 
+                                                    protocol_type=itm.OntologyAnnotation(term="Chromatography"),
+                                                    description=dj_chr.name)
+
+                chromatography_protocol.parameters.extend(itm_pparams['chr'].values())
+
+                itm_s.protocols.append(chromatography_protocol)
+
+                itm_p['chr'][k] = chromatography_protocol
+        else:
+            chromatography_protocol = itm.Protocol(name='Chromatography',
+                                                    protocol_type=itm.OntologyAnnotation(term="Chromatography"),
+                                                    description='')
+
+            chromatography_protocol.parameters.extend(itm_pparams['chr'].values())
             itm_s.protocols.append(chromatography_protocol)
+            for k, dj_ex in six.iteritems(dj_p['spe']):
+                itm_p['chr'][k] = chromatography_protocol
 
-            itm_p['chr'][k] = chromatography_protocol
-
-
-
-        for k, dj_meas in six.iteritems(dj_p['meas']):
-            #===========================================
-            # Get measurment protocols (just mass spec for now)
-            #===========================================
-            if dj_meas.name:
-                nm = dj_meas.name
-            else:
-                nm = dj_meas.measurementtechnique.type
-            mass_spec_protocol = itm.Protocol(name='Mass spectrometry {}'.format(nm),
+        #===========================================
+        # Get measurment protocols
+        #===========================================
+        for term in ['Scan polarity', 'Scan m/z range', 'Ion source', 'Mass analyzer', 'Detector', 'Inlet type',
+                     'Instrument', 'Instrument manufacturer', 'Instrument serial number', 'Instrument software',
+                     'Instrument software version']:
+            itm_pparams['meas'][term] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term=term))
+       
+        if not metabolights_compat:
+            # MetaboLights should only have one protocol per for Mass Spectrometry - where as for DMAdb
+            # we separate into different protocols
+            for k, dj_meas in six.iteritems(dj_p['meas']):
+                
+                mass_spec_protocol = itm.Protocol(name='Mass spectrometry ({})'.format(dj_meas.code_field),
+                                                protocol_type=itm.OntologyAnnotation(term="Mass spectrometry"))
+                mass_spec_protocol.parameters.extend(itm_pparams['meas'].values())
+                itm_s.protocols.append(mass_spec_protocol)
+                
+                itm_p['meas'][k] = mass_spec_protocol
+        else:
+            # i.e. MetaboLights do not distinguish Mass spectrometry protocols and ISA tab export can only handle
+            # one type of measurment protocol per assay file - so we can't separate here
+            mass_spec_protocol = itm.Protocol(name='Mass spectrometry',
                                               protocol_type=itm.OntologyAnnotation(term="Mass spectrometry"))
+            mass_spec_protocol.parameters.extend(itm_pparams['meas'].values())
             itm_s.protocols.append(mass_spec_protocol)
-            itm_p['meas'][k] = mass_spec_protocol
+            for k, dj_meas in six.iteritems(dj_p['meas']):
+                itm_p['meas'][k] = mass_spec_protocol
 
+        
 
+        #===========================================
+        # Get data transformation protocols
+        #===========================================
+        dt_protocol = itm.Protocol(name='Data transformation',
+                                   protocol_type=itm.OntologyAnnotation(term="Data transformation"))
+        itm_s.protocols.append(dt_protocol)
+        
+        itm_p['dt'] = dt_protocol
 
+        #===========================================
+        # Metabolite annnotation protocol
+        #===========================================
+        ma_protocol = itm.Protocol(name='Metabolite annotation',
+                                   protocol_type=itm.OntologyAnnotation(term="Metabolite annotation"))
+        itm_s.protocols.append(ma_protocol)
+        
+        itm_p['ma'] = ma_protocol
 
-        for dj_a in dj_s.assay_set.all():
-            itm_a = itm.Assay(filename="a_assay_{}.txt".format(dj_a.name))
+        # To simplify the structure for MetaboLights we also break the assays for LC-MS derived annotations
+        # as  POLAR-POS, POLAR-NEG, APOLAR-POS, APOLAR-NEG. This fits with the more common structure in MetaboLights
+        # of separating out the reverse phase (Lipid - apolar) and HILIC assays (metabolites - polar) assays and 
+        # makes the MetaboLights ISA page more intepretable 
+        dj_assay_lists = defaultdict(list)
+        if metabolights_compat:
+            for dj_a in dj_s.assay_set.all():
+                # assay name should be in this form [EXTRACTION]_[SPE]_[SPE_NUMBER]_[CHROM]_[MSM optional]_[POLARITY]
+                dj_a_name_l = dj_a.name.split('_')
+                extraction_type = dj_a_name_l[0]
+                polarity_type = dj_a_name_l[len(dj_a_name_l)-1]
+                if extraction_type.lower() == 'apol' and polarity_type.lower() == 'pos':
+                    dj_assay_lists['apolar_positive'].append(dj_a)
+                elif extraction_type.lower() == 'apol' and polarity_type.lower() == 'neg':
+                    dj_assay_lists['apolar_negative'].append(dj_a)
+                elif extraction_type.lower() == 'pol' and polarity_type.lower() == 'pos':
+                    dj_assay_lists['polar_positive'].append(dj_a)
+                elif extraction_type.lower() == 'pol' and polarity_type.lower() == 'neg':
+                    dj_assay_lists['polar_negative'].append(dj_a)
+                
+        else:
+            for dj_a in dj_s.assay_set.all():
+                dj_assay_lists[dj_a.name].append(dj_a)
 
-            # go through each details (which is linked to all the relevant process)
-            for dj_ad in dj_a.assaydetail_set.all():
+        c = 0
+        
+        for assay_name, dj_assays in dj_assay_lists.items():
+            c += 1
+            itm_a = itm.Assay(filename="a_assay_{}.txt".format(assay_name))  
 
+            # go through each file (logically this should be the assay detail but this does not
+            # fit with the structure of ISA tab used for MetaboLights where each row is a file )
+            for idx, dj_mfile in enumerate(MFile.objects.filter(run__assaydetail__assay__in=dj_assays, mfilesuffix__suffix='.mzml')):
+
+                print(dj_mfile.prefix)
+                if celery_obj:
+                     celery_obj.update_state(state='RUNNING',
+                                            meta={'current': c, 'total':  len(dj_assay_lists)+10,
+                                                  'status': 'Assay ({} of {}) - current file {}'.format(c, len(dj_assay_lists), dj_mfile.prefix)})
+
+                datafile = itm.DataFile(filename=dj_mfile.prefix+'.raw', label="Raw Spectral Data File")
+                itm_a.data_files.append(datafile)
+                
+                dj_ad = dj_mfile.run.assaydetail
                 ####################################
                 # Get extraction
                 ####################################
@@ -338,9 +428,24 @@ def export_isa_files(investigation_id):
 
                 extraction_process = itm.Process(executes_protocol=itm_ex_prot)
                 extraction_process.name = "extract-process-{}".format(dj_ad.code_field)
-                material = itm.Material(name="extract-{}".format(dj_ad.code_field))
-                material.type = "Extract Name"
-                extraction_process.outputs.append(material)
+                
+                if dj_ad.speprocess and metabolights_compat:
+                    extraction_process.parameter_values.extend([
+                        itm.ParameterValue(itm_pparams['ex']['Post Extraction'], 
+                                        '{} ({}), SPE ({})'.format(
+                                                                    dj_ad.extractionprocess.extractionprotocol.extractiontype.type,
+                                                                    dj_ad.extractionprocess.extractionprotocol.postextraction,
+                                                                    dj_ad.speprocess.speprotocol.name.replace('DMA D. magna ', '')))
+                    ])
+                else:
+                    extraction_process.parameter_values.extend([
+                        itm.ParameterValue(itm_pparams['ex']['Post Extraction'], dj_ad.extractionprocess.extractionprotocol.postextraction),
+                    ])
+
+                extract_material = itm.Material(name=' ')
+                extract_material.type = "Extract Name"
+                extraction_process.outputs.append(extract_material)
+                itm_a.other_material.append(extract_material)
 
                 ############################################################
                 ##### IMPORTANT: WE add the sample input here! #############
@@ -350,16 +455,18 @@ def export_isa_files(investigation_id):
                 ####################################
                 # Get SPE
                 ####################################
-                if dj_ad.speprocess:
+                if dj_ad.speprocess and not metabolights_compat:
 
                     itm_spe_prot = itm_p['spe'][dj_ad.speprocess.speprotocol.id]
                     spe_process = itm.Process(executes_protocol=itm_spe_prot)
                     spe_process.name = "spe-process-{}".format(dj_ad.code_field)
                     spe_process.inputs.append(extraction_process.outputs[0])
 
-                    material = itm.Material(name="SPE-Eluent-{}".format(dj_ad.code_field))
-                    material.type = "Extract Name"
-                    spe_process.outputs.append(material)
+                    spe_material = itm.Material(name=idx+1)
+                    spe_material.type = "Extract Name"
+                    spe_process.outputs.append(spe_material)
+                    itm_a.other_material.append(spe_material)
+                
 
 
                 ####################################
@@ -368,57 +475,170 @@ def export_isa_files(investigation_id):
                 itm_chr_prot = itm_p['chr'][dj_ad.chromatographyprocess.chromatographyprotocol.id]
                 chr_process = itm.Process(executes_protocol=itm_chr_prot)
                 chr_process.name = "chr-process-{}".format(dj_ad.code_field)
+                chrom_type = dj_ad.chromatographyprocess.chromatographyprotocol.chromatographytype.ontologyterm.all()[0]
+                chrom_instrument = dj_ad.chromatographyprocess.chromatographyprotocol.instrument_name
+                column_model = dj_ad.chromatographyprocess.chromatographyprotocol.description
+                chr_process.parameter_values.extend([
+                    itm.ParameterValue(itm_pparams['chr']['Chromatography instrument'], chrom_instrument if chrom_instrument else ' '),
+                    itm.ParameterValue(itm_pparams['chr']['Autosampler model'], ' '), # too detailed to add here
+                    itm.ParameterValue(itm_pparams['chr']['Column model'], column_model if column_model else ' '),
+                    itm.ParameterValue(itm_pparams['chr']['Column type'], itm.OntologyAnnotation(term=chrom_type.name,
+                                                                                                term_source= check_ontology_source(itm_i,  chrom_type.ontology_prefix),
+                                                                                                term_accession=chrom_type.iri)),
+                    itm.ParameterValue(itm_pparams['chr']['Guard column'], ' '),  # we don't record the guard column information
+                ])
 
-                if dj_ad.speprocess:
+
+
+                if dj_ad.speprocess and not metabolights_compat:
                     chr_process.inputs.append(spe_process.outputs[0])
                 else:
                     chr_process.inputs.append(extraction_process.outputs[0])
 
-                material = itm.Material(name="Chromatography-Eluent-{}".format(dj_ad.code_field))
-                material.type = "Extract Name"
+                chr_material = itm.Material(name=' ')   # leave blank - causes problems having multiple materials in isa-tab output
+                chr_material.type = "Labeled Extract Name"  # Namining used by metabolights
+                chr_material.label = " "
 
-                chr_process.outputs.append(material)
+                chr_process.outputs.append(chr_material)
+                itm_a.other_material.append(chr_material)
 
 
                 ####################################
                 # Get measurements (mass spec only)
                 ####################################
-                itm_meas_prot = itm_p['meas'][dj_ad.measurementprocess.measurementprotocol.id]
+                itm_meas_prot = itm_p['meas'][dj_ad.measurementprocess.measurementprotocol.id]               
                 meas_process = itm.Process(executes_protocol=itm_meas_prot)
                 meas_process.name = "meas-process-{}".format(dj_ad.code_field)
                 meas_process.inputs.append(chr_process.outputs[0])
+                meas_process.outputs.append(datafile)
 
+                #read in mzml file
+                if  extract_mzml_info and dj_mfile.mfilesuffix.suffix == '.mzml':
+                    mzmlf = mzml.MzMLFile(os.path.dirname(dj_mfile.data_file.path), os.path.basename(dj_mfile.data_file.path))
+                    
+                    meas_process.parameter_values.extend([
+                        extract_parameter_value_mzml(mzmlf, 'Scan polarity', itm_pparams, itm_i, section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Scan m/z range', itm_pparams, itm_i,section='meas', value=True),
+                        extract_parameter_value_mzml(mzmlf, 'Ion source', itm_pparams,itm_i, section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Mass analyzer', itm_pparams,itm_i, section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Detector', itm_pparams, itm_i,section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Inlet type', itm_pparams,itm_i, section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Instrument', itm_pparams,itm_i, section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Instrument serial number', itm_pparams,itm_i, section='meas', value=True),
+                        extract_parameter_value_mzml(mzmlf, 'Instrument software', itm_pparams, itm_i,section='meas', value=False),
+                        extract_parameter_value_mzml(mzmlf, 'Instrument software version', itm_pparams,itm_i, section='meas', value=True),
+                    ])
 
-                # get output file
-                for file_details in dj_ad.assayrun_set.all().values('run__mfile', 'run__mfile__original_filename'):
-                    datafile = itm.DataFile(filename=file_details['run__mfile__original_filename'], label="Raw Data File")
-                    meas_process.outputs.append(datafile)
-                    itm_a.data_files.append(datafile)
+                
+                ####################################
+                # Data transformations
+                ####################################
+                dt_process = itm.Process(executes_protocol=itm_p['dt'])
+                dt_process.inputs.append(meas_process.outputs[0])
+                datafile = itm.DataFile(filename=dj_mfile.original_filename, label="Derived Spectral Data File")
+                dt_process.outputs.append(datafile)
+                dt_process.name = " "
 
-                if dj_ad.speprocess:
+                ####################################
+                # Metabolite annotation
+                ####################################
+                ma_process = itm.Process(executes_protocol=itm_p['ma'])
+                ma_process.inputs.append(dt_process.outputs[0])
+                ma_process.name = " "
+
+                if metabolights_compat and export_isatab:
+                    # Create MetaboLight compatible Metabolight Assignment Files - some field missing but
+                    # enough for the submission
+                    met_id_file_name = 'm_{}.tsv'.format(assay_name)
+                    datafile = itm.DataFile(filename=met_id_file_name, label="Metabolite Assignment File" )
+                    ma_process.outputs.append(datafile)
+                    extraction, polarity = assay_name.split('_')
+
+                    compounds = Compound.objects.filter(
+                                                        polarity__icontains=polarity,
+                                                        extraction__icontains=extraction
+                                                        ).values().annotate(
+                                                                  species=F('organisms'), 
+                                                                  database_identifier=F('chebi_ids'), 
+                                                                  chemical_formula=F('molecular_formula'), 
+                                                                  metabolite_identification=F('compound_name'),
+                                                        )
+                     
+                    
+                    df = pd.DataFrame(list(compounds))
+                    df = df.replace({'NA': None})
+                    df = df.reindex(columns=['database_identifier', 'chemical_formula', 
+                                        'smiles', 'inchi', 'metabolite_identification',
+                                         'hmdb_ids', 'kegg_ids', 'pubchem_cids', 'mass_to_charge', 'fragmentation',	'modifications'
+                                        'charge', 'retention_time', 'taxid', 'species', 'database',
+                                        'database_version', 'reliability', 'uri',
+                                        'search_engine', 'search_engine_score', 'smallmolecule_abundance_sub',
+                                         'smallmolecule_abundance_stdev_sub', 'smallmolecule_abundance_std_error_sub'], fill_value=None)
+                    df = df.sort_values(by=['database_identifier', 'hmdb_ids', 'kegg_ids', 'metabolite_identification'])
+                    df.to_csv(os.path.join(isa_temp_dir, met_id_file_name), sep="\t", index=False)
+
+                    
+
+                
+
+                if dj_ad.speprocess and not metabolights_compat:
                     itm.plink(extraction_process, spe_process)
                     itm.plink(spe_process, chr_process)
                 else:
                     itm.plink(extraction_process, chr_process)
 
                 itm.plink(chr_process, meas_process)
+                itm.plink(meas_process, dt_process)               
+                itm.plink(dt_process, ma_process)               
 
 
                 itm_a.samples.append(itm_samplei)
-                itm_a.other_material.append(material)
+                
                 itm_a.process_sequence.append(extraction_process)
 
-                if dj_ad.speprocess:
+                if dj_ad.speprocess and not metabolights_compat:
                     itm_a.process_sequence.append(spe_process)
 
                 itm_a.process_sequence.append(chr_process)
                 itm_a.process_sequence.append(meas_process)
-                itm_a.measurement_type = itm.OntologyAnnotation(term="gene sequencing")
-                itm_a.technology_type = itm.OntologyAnnotation(term="nucleotide sequencing")
+                itm_a.process_sequence.append(dt_process)
+                itm_a.process_sequence.append(ma_process)
+                
+                itm_a.measurement_type = itm.OntologyAnnotation(term='metabolite profiling')
+                itm_a.technology_type = itm.OntologyAnnotation(term='mass spectrometry')
+
 
             itm_s.assays.append(itm_a)
 
 
-    # Note we haven't added factors yet
+    # Save ISA-Tab zip
+    if export_isatab:
+        if celery_obj:
+            celery_obj.update_state(state='RUNNING',
+                                            meta={'current': c+5, 'total':  len(dj_assays)+10,
+                                                  'status': 'Exporting ISA tab zip'})
 
-    return itm_i, json.dumps(itm_i, cls=ISAJSONEncoder, sort_keys=True, indent=4, separators=(',', ': '))
+        isatab.dump(itm_i, isa_temp_dir)
+        shutil.make_archive(isa_temp_dir, 'zip', isa_temp_dir)
+        isa_temp_zip = os.path.join(tmpdir, 'isa.zip')        
+        print(isa_temp_zip)
+        
+        dj_i.isa_tab_zip.save(os.path.basename(isa_temp_zip), content=File(open(isa_temp_zip, 'rb')))
+        shutil.rmtree(tmpdir)
+   
+    
+    # create json
+    if export_json: 
+        if celery_obj:
+            celery_obj.update_state(state='RUNNING',
+                                            meta={'current': c+9, 'total':  len(dj_assay_lists)+10,
+                                                  'status': 'Exporting IS-JSON'})
+        json_out = json.dumps(itm_i, cls=ISAJSONEncoder, sort_keys=True, indent=4, separators=(',', ': '))
+        dj_i.json_file.save('isa.json', ContentFile(json_out), save=True)
+    
+    if celery_obj:
+        celery_obj.update_state(state='SUCCESS',
+                                meta={'current': 100, 'total':  100,
+                                      'status': 'ISA data exported'})
+    return itm_i
+    

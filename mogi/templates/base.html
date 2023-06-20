@@ -1,18 +1,17 @@
 {% extends "django_sb_admin/base.html" %}
 {% load static %}
 {% load bootstrap3 %}
-{% load staticfiles %}
+{% load static %}
 {% load socialaccount %}
 {% load account %}
 {% user_display user %}
 {% block sb_admin_css %}
-
 {% bootstrap_css %}
+
 <link href="{% static "css/sb-admin.css" %}" rel="stylesheet">
 <link href="{% static 'css/mogi.css' %}" rel="stylesheet">
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
 {% endblock sb_admin_css %}
-
 
 
 {% block sb_admin_fonts_css %}
@@ -34,37 +33,14 @@
     <ul class="nav navbar-right top-nav">
 
         <li class="dropdown">
-{#                    {% if messages %}#}
-{#                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="color:red" class="fa fa-bell"></i> <b class="caret"></b></a>#}
-{#                    {% else %}#}
-{#                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-bell"></i> <b class="caret"></b></a>#}
-{#                    {% endif %}#}
-
                     <ul class="dropdown-menu alert-dropdown">
-
-                        <!--<li>-->
-                            <!--<a href="location.reload()">Clear alerts</a>-->
-                        <!--</li>-->
-                        <!--<li class="divider"></li>-->
-
-                        <!--{% if messages %}-->
-                            <!--{% for message in messages %}-->
-                            <!--<li>-->
-                                <!--<a href="#"><span class="label label-{{ message.tags }}" >{{ message }}</span></a>-->
-                            <!--</li>-->
-                            <!--{% endfor %}-->
-                        <!--{% endif %}-->
                     </ul>
-
         </li>
         <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> {% if user.username %}{{ user.username }}{% else %}Anonymous{% endif %} <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                             {% if user.is_authenticated %}
-{#                                <li><a href="#"><i class="fa fa-fw fa-user"></i> Profile</a></li>#}
-{#                                <li><a href="#"><i class="fa fa-fw fa-gear"></i> Settings</a></li>#}
 
-{#                                <li class="divider"></li>#}
                                 <li><a href="{% url 'account_logout' %}"><span class="glyphicon
                                 glyphicon-log-out"></span> Logout</a></li>
                                 <li><a href="{% url 'account_change_password' %}"><span class="glyphicon
@@ -147,19 +123,10 @@
                                 <a href="javascript:;" data-toggle="collapse" data-target="#search_drop"><i class="fa fa-fw fa-search"></i>  Search <i class="fa fa-fw fa-caret-down"></i></a>
                                 <ul id="search_drop" class="collapse">
                                 <li>
-                                    <a href="{% url "search_mz" %}"> m/z search</a>
+                                    <a class="darkback" href="{% url "search_mono" %}"> Monoisotopic exact mass search</a>
                                 </li>
                                 <li>
-                                    <a href="{% url "search_frag" %}"> Fragmentation search</a>
-                                </li>
-                                <li>
-                                    <a href="#"> Compound mass search (todo)</a>
-                                </li>
-                                <li>
-                                    <a href="#"> Compound similarity search (todo)</a>
-                                </li>
-                                <li>
-                                    <a href="{% url "search_results" %}"> Search Results</a>
+                                    <a class="darkback" href="{% url "search_frag" %}"> Fragmentation search</a>
                                 </li>
                                 </ul>
                             </li>
@@ -167,27 +134,19 @@
                         <a href="javascript:;" data-toggle="collapse" data-target="#browse_drop"><i class="fa fa-fw fa-align-left"></i>  Browse <i class="fa fa-fw fa-caret-down"></i></a>
                         <ul id="browse_drop" class="collapse">
                             <li>
-                                <a href="{% url "mfile_summary" %}"> Show all metabolomics data files</a>
+                                <a class="darkback" href="{% url "mfile_summary" %}"> Show all metabolomics data files</a>
                             </li>
                             <li>
-                                <a href="{% url 'metabinputdata_summary' %}"> Show all datasets</a>
+                                <a class="darkback" href="{% url 'dataset_summary' %}"> Show all datasets</a>
                             </li>
                             <li>
-                                <a href="{% url 'combinedpeak_summary_all' %}"> Show all peaks</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'combinedannotation_summary_all' %}"> Show all annotations</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'compounds' %}"> Show all compounds</a>
+                                <a class="darkback" href="{% url 'compounds' %}"> Show all compounds</a>
                             </li>
 
                         </ul>
                     </li>
                             </ul>
                     </li>
-
-
 
                 <li {% if nav_active == "about" %}class="active"{% endif %}>
                         <a href="{% url "about" %}"><i class="fa fa-fw fa-info-circle"></i> About</a>
@@ -199,15 +158,12 @@
 
 {% block sb_admin_content %}
 
-{% block content %}
-     {% endblock %}
-
-
+{% block content %}{% endblock %}
 
 <footer class="sticky-footer">
     <div class="container my-auto">
       <div class="copyright text-center my-auto">
-        
+
         <span>{% block sb_admin_copyright %}Copyright © University of Birmingham {% now "Y" %} {% endblock sb_admin_copyright %}</span>
       </div>
     </div>

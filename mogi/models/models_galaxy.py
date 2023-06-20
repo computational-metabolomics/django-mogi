@@ -15,7 +15,7 @@ class ISAGalaxyTrack(models.Model):
                                                blank=False)
     isatogalaxyparam = models.ForeignKey(FilesToGalaxyDataLibraryParam, on_delete=models.CASCADE)
     investigation = models.ForeignKey(Investigation, on_delete=models.CASCADE)
-    galaxy_id = models.CharField(max_length=250)
+    galaxy_id = models.CharField(max_length=254)
 
     def __str__(self):              # __unicode__ on Python 2
         return self.galaxy_id

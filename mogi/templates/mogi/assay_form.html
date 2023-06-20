@@ -1,7 +1,7 @@
 {% extends 'gfiles/simple_form.html' %}
 {% load static %}
 {% block sb_admin_title %}
-{% if assay  %}
+{% if form.instance.pk  %}
     Update an Assay
         {% else %}
     Create a New Assay
@@ -14,3 +14,8 @@
 {% endblock sb_admin_breadcrumb %}
 {% block sb_admin_breadcrumb_active %} / Create assay {% endblock sb_admin_breadcrumb_active %}
 {% block panel_title %}{% endblock panel_title %}
+
+{% block sb_admin_custom_js %}
+    <script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+    {{ form.media }}
+{% endblock sb_admin_custom_js %}

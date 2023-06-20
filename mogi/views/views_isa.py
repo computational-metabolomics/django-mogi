@@ -18,7 +18,7 @@ from django_tables2 import RequestConfig
 from django.urls import reverse_lazy
 from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import redirect
-
+from django.core.files.base import ContentFile
 
 from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
@@ -36,7 +36,7 @@ from mogi.utils.isa_export import export_isa_files
 from mogi.utils.ontology_utils import search_ontology_term
 from mogi.utils.sample_batch_create import sample_batch_create
 from mogi.utils.mfile_upload import upload_files_from_zip
-from mogi.tasks import upload_assay_data_files_dir_task, upload_files_from_dir_task
+from mogi.tasks import upload_assay_data_files_dir_task, upload_files_from_dir_task, export_isa_files_task
 
 
 
@@ -156,11 +156,11 @@ class MFileListView(GFileListView):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return self.model.objects.all()
-        elif self.self.request.user.is_authenticated:
-            return self.model.objects.filter(Q(run__assay__public=True) |
-                                             Q(run__assay__owner=self.request.user))
+        elif self.request.user.is_authenticated:
+            return self.model.objects.filter(Q(run__assaydetail__assay__public=True) |
+                                             Q(run__assaydetail__assay__owner=self.request.user))
         else:
-            return self.model.objects.filter(run__assay__public=True)
+            return self.model.objects.filter(run__assaydetail__assay__public=True)
 
 
 
@@ -216,19 +216,47 @@ class AutoCompleteWithUserPermissions(autocomplete.Select2QuerySetView):
 class ISAJsonExport(ISAOperatorMixin, View):
 
     def handle_no_permission(self):
+        messages.error(self.request, 'User has insufficient privileges to export ISA')
         return redirect('ilist')
 
     def get(self, request, *args, **kwargs):
 
         inv = models_isa.Investigation.objects.filter(pk=self.kwargs['pk'])
 
-        if inv:
-            isa_out, json_out = export_isa_files(inv[0].id)
+        result = export_isa_files_task.delay(inv[0].id, request.user.id, metabolights_compat=True, extract_mzml_info=True)
+        
+        request.session['result'] = result.id
 
-        else:
-            json_out = {}
 
-        return HttpResponse(json_out, content_type="application/json")
+        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
+
+
+
+class ExportISACreateView(PermissionRequiredMixin, AccessMixin, CreateView):
+    model = models_isa.ExportISA
+    form_class = forms_isa.ExportISAForm
+    permission_required = 'mogi.add_investigation'
+    success_url = '/mogi/success'
+
+    task_string = 'export ISA data'
+    success_message = 'exporting ISA data'
+    redirect_string = 'ilist'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'User has insufficient privileges to {}'.format(self.task_string))
+        return redirect(self.redirect_string)
+
+    def form_valid(self, form):
+        exisa = form.save()
+        
+        result = export_isa_files_task.delay(exisa.id, self.request.user.id)
+        
+        self.request.session['result'] = result.id
+        #return redirect(self.redirect_string)
+        return render(self.request, 'gfiles/status.html', {'s': 0, 'progress': 0})
+    
+
+
 
 
 #########################################
