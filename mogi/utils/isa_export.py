@@ -618,7 +618,6 @@ def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_in
 
             itm_s.assays.append(itm_a)
 
-
     # Save ISA-Tab zip
     if export_isatab:
         if celery_obj:

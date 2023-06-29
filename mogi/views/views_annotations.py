@@ -148,6 +148,10 @@ def get_combined_annotation_table(dataset_id, sql_filter_stmt):
 
     return summary
 
+    # def get_queryset(self):
+        # smr = models_annotations.CombinedAnnotation.objects.filter(id=self.kwargs.get('spid'))
+        # smr = get_combined_annotation_table(self.kwargs.get('did'))
+        # return smr
 
 class SpectralMatchingListView(ExportMixin, LoginRequiredMixin, SingleTableMixin, FilterView):
     model = models_annotations.SpectralMatching

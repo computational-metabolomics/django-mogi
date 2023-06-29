@@ -28,7 +28,6 @@ class CombinedAnnotationFilter(django_filters.FilterSet):
         }
 
 
-
 class SpectralMatchingFilter(django_filters.FilterSet):
 
     class Meta:
