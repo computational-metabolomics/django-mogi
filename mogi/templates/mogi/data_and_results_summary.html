@@ -20,13 +20,13 @@
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search </h3>
+                    <h3 class="panel-title">Browse </h3>
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-<!--                       <a href="{% url "search_mz" %}" class="list-group-item"><i>m/z</i> search</a>-->
-                       <a href="{% url "search_mono" %}" class="list-group-item">Monoisotopic exact mass search</a>
-                       <a href="{% url "search_frag" %}" class="list-group-item">Fragmentation search</a>
+                        <a href="{% url 'compounds' %}" class="list-group-item">Show all compounds</a>    
+                        <a href="{% url 'mfile_summary' %}" class="list-group-item">Show all metabolomics files</a>
+                        <a href="{% url 'dataset_summary' %}" class="list-group-item">Show all analysis datasets</a>
                     </div>
                 </div>
             </div>
@@ -34,18 +34,20 @@
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Browse </h3>
+                    <h3 class="panel-title">Search </h3>
                 </div>
                 <div class="panel-body">
                    <div class="list-group">
-                        <a href="{% url 'mfile_summary' %}" class="list-group-item">Show all metabolomics files</a>
-                        <a href="{% url 'dataset_summary' %}" class="list-group-item">Show all
-                            analysis datasets</a>
-                        <a href="{% url 'compounds' %}" class="list-group-item">Show all compounds</a>
+<!--                       <a href="{% url "search_mz" %}" class="list-group-item"><i>m/z</i> search</a>-->
+                       <a href="{% url "search_mono" %}" class="list-group-item">Monoisotopic exact mass search</a>
+                       <a href="{% url "search_mono_param" %}" class="list-group-item">Monoisotopic exact mass search results</a>
+                       <a href="{% url "search_frag" %}" class="list-group-item">Fragmentation search</a>
+                       <a href="{% url "search_frag_param" %}" class="list-group-item">Fragmentation search results</a>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">

@@ -54,6 +54,17 @@ class CombinedAnnotationListView(ExportMixin, LoginRequiredMixin, SingleTableMix
         context = super(CombinedAnnotationListView, self).get_context_data(**kwargs)
 
         return context
+    
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(CombinedAnnotationListView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"rank__lt": 2, "wscore__gt": 0.7}
+        elif "rank__lt" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["rank__lt"] = 2
+            kwargs["data"]["wscore__gt"] = 0.7
+        return kwargs
+
 
 
 def get_combined_annotation_table(dataset_id, sql_filter_stmt):

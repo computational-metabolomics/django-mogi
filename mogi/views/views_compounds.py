@@ -26,6 +26,18 @@ class CompoundListView(ExportMixin, SingleTableMixin, FilterView):
     export_formats = ['csv']
     export_name = 'compounds'
 
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(CompoundListView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"smbool": True, "metfragbool": True, "siriusbool":True}
+        elif "smbool" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["smbool"] = True
+            kwargs["data"]["metfragbool"] = True
+            kwargs["data"]["siriusbool"] = True
+
+        return kwargs
+
 class UploadCompounds(views_isa.ISAOperatorMixin, CreateView):
     redirect_string = 'data_and_results_summary'
     task_string = 'create'

@@ -7,7 +7,9 @@ from django_tables2.views import SingleTableMixin
 from django.views.generic import CreateView, UpdateView, View
 from django.shortcuts import render
 from django.urls import reverse_lazy
+from django_filters.views import FilterView
 
+from mogi.filter import filter_datasets
 from mogi.models import models_datasets
 from mogi.tables import tables_datasets
 from mogi.forms import forms_datasets
@@ -15,14 +17,23 @@ from mogi.tasks import upload_dataset_task
 from mogi.views import views_isa
 
 
-class DatasetListView(SingleTableMixin, ListView):
+class DatasetListView(SingleTableMixin,  FilterView):
     '''
     '''
     table_class = tables_datasets.ResultsDataTable
+    filterset_class = filter_datasets.DatasetFilter
     model = models_datasets.Dataset
     template_name = 'mogi/results_summary.html'
 
 
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(FilterView, self).get_filterset_kwargs(filterset_class)
+        if kwargs["data"] is None:
+            kwargs["data"] = {"metabolite_standard": False}
+        elif "metabolite_standard" not in kwargs["data"]:
+            kwargs["data"] = kwargs["data"].copy()
+            kwargs["data"]["metabolite_standard"] = False
+        return kwargs
 
 
 class UploadDatasetsView(views_isa.ISAOperatorMixin, CreateView):

@@ -252,18 +252,6 @@ def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_in
                                                                     term_accession='http://purl.obolibrary.org/obo/CHMO_0001485'))
         itm_pparams['ex']['Post Extraction'] = itm.ProtocolParameter(parameter_name=itm.OntologyAnnotation(term="Post Extraction"))    
         if not metabolights_compat:
-            # Only one extraction protocol for Metabolights
-            extraction_protocol = itm.Protocol(name='Extraction',
-                                                protocol_type=itm.OntologyAnnotation(term="Extraction"),
-                                                )  
-
-            extraction_protocol.parameters.extend(itm_pparams['ex'].values())
-
-            itm_s.protocols.append(extraction_protocol)
-            for k, dj_ex in six.iteritems(dj_p['ex']):
-                itm_p['ex'][k] = extraction_protocol
-        
-        else:
             for k, dj_ex in six.iteritems(dj_p['ex']):
 
                 extraction_protocol = itm.Protocol(name='Extraction ({})'.format(dj_ex.code_field),
@@ -275,6 +263,19 @@ def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_in
 
                 itm_s.protocols.append(extraction_protocol)
 
+                itm_p['ex'][k] = extraction_protocol
+
+        
+        else:
+            # Only one extraction protocol for Metabolights
+            extraction_protocol = itm.Protocol(name='Extraction',
+                                                protocol_type=itm.OntologyAnnotation(term="Extraction"),
+                                                )  
+
+            extraction_protocol.parameters.extend(itm_pparams['ex'].values())
+
+            itm_s.protocols.append(extraction_protocol)
+            for k, dj_ex in six.iteritems(dj_p['ex']):
                 itm_p['ex'][k] = extraction_protocol
 
 
@@ -426,6 +427,8 @@ def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_in
                 ####################################
                 itm_ex_prot = itm_p['ex'][dj_ad.extractionprocess.extractionprotocol.id]
 
+                print(itm_ex_prot)
+
                 extraction_process = itm.Process(executes_protocol=itm_ex_prot)
                 extraction_process.name = "extract-process-{}".format(dj_ad.code_field)
                 
@@ -569,12 +572,17 @@ def export_isa_files(investigation_id, metabolights_compat=True, extract_mzml_in
                     df = df.replace({'NA': None})
                     df = df.reindex(columns=['database_identifier', 'chemical_formula', 
                                         'smiles', 'inchi', 'metabolite_identification',
-                                         'hmdb_ids', 'kegg_ids', 'pubchem_cids', 'mass_to_charge', 'fragmentation',	'modifications'
+                                        'mass_to_charge', 'fragmentation',	'modifications'
                                         'charge', 'retention_time', 'taxid', 'species', 'database',
                                         'database_version', 'reliability', 'uri',
                                         'search_engine', 'search_engine_score', 'smallmolecule_abundance_sub',
-                                         'smallmolecule_abundance_stdev_sub', 'smallmolecule_abundance_std_error_sub'], fill_value=None)
-                    df = df.sort_values(by=['database_identifier', 'hmdb_ids', 'kegg_ids', 'metabolite_identification'])
+                                         'smallmolecule_abundance_stdev_sub', 'smallmolecule_abundance_std_error_sub', 
+                                           'hmdb_ids', 'kegg_ids', 'pubchem_cids', 'inchikey', 'inchikey1', 'monoisotopic_exact_mass',
+                                            'kingdom', 'superclass', 'class', 'subclass', 'direct_parent',
+                                            'lcmsdimsbool', 'nmrbool', 'gcmsbool', 'smbool', 'metfragbool',
+                                            'siriusbool', 'mzcloudsmbool', 'galaxysmbool', 'gnspbool', 'msi_level'
+                                            ], fill_value=None)
+                    df = df.sort_values(by=['database_identifier', 'hmdb_ids', 'kegg_ids', 'metabolite_identification',])
                     df.to_csv(os.path.join(isa_temp_dir, met_id_file_name), sep="\t", index=False)
 
                     
