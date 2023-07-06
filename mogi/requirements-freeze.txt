@@ -119,7 +119,7 @@ requests-cache==0.5.2
 requests-oauthlib==1.3.0
 requests-toolbelt==0.9.1
 retrying==1.3.3
-scipy==1.3.3
+scipy==1.10.0
 seaborn==0.9.0
 Send2Trash==1.5.0
 six==1.13.0
