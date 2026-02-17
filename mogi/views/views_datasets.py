@@ -29,10 +29,10 @@ class DatasetListView(SingleTableMixin,  FilterView):
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(FilterView, self).get_filterset_kwargs(filterset_class)
         if kwargs["data"] is None:
-            kwargs["data"] = {"metabolite_standard": False}
+            kwargs["data"] = {"metabolite_standard": 'false'}
         elif "metabolite_standard" not in kwargs["data"]:
             kwargs["data"] = kwargs["data"].copy()
-            kwargs["data"]["metabolite_standard"] = False
+            kwargs["data"]["metabolite_standard"] = 'false'
         return kwargs
 
 
