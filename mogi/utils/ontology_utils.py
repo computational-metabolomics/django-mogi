@@ -18,8 +18,8 @@ def get_result_d(resp_d):
         result_d = resp_d['response']['docs']
         for c, row in enumerate(result_d):
             row['c'] = c
-            row['name'] = row.pop('label')
-            row['ontology_id'] = row.pop('id')
+            row['name'] = row.pop('label', '')
+            row['ontology_id'] = row.pop('id', '')
         return result_d
     else:
         return {}

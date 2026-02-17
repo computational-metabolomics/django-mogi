@@ -2,11 +2,18 @@
 django-mogi
 ====================
 
-|Build Status (Travis)| |Py versions|
+Metabolomics organisation with Galaxy and ISA.
 
-Metabolomics organisation with Galaxy and ISA
+Used to create `DMAdb <https://mogi.readthedocs.io/en/latest/>`__, see `ReadTheDocs (DMAdb) <https://dmadb.readthedocs.io/en/latest/getting-started.html>`__ for documentation.
 
-Further documentation available on `ReadTheDocs <https://mogi.readthedocs.io/en/latest/>`__
+Previous documentation can be found at `ReadTheDocs (legacy) <https://mogi.readthedocs.io/en/latest/>`__.
+
+PyPI Archive Notice
+-------------------
+
+This package is no longer updated on PyPI.
+
+For current code and updates, use this `GitHub repository <https://github.com/computational-metabolomics/django-mogi>`__.
 
 Quick start
 -----------
@@ -42,20 +49,3 @@ Quick start
 3. Run `python manage.py migrate` to create the mogi models.
 
 4. Start the development server and visit http://127.0.0.1:8000/
-
-5. Register http://127.0.0.1:8000/register/ and login http://127.0.0.1:8000/login/
-
-6. General overview http://127.0.0.1:8000
-
-7. Create, edit, view and export ISA projects http://127.0.0.1:8000/misa/ilist/
-
-8. Upload to Galaxy, run Galaxy workflows and view Galaxy histories http://127.0.0.1:8000/misa/ilist/
-
-9. Browse, view and search metabolomic datasets http://127.0.0.1:8000/mbrowse/general_summary/
-
-
-.. |Build Status (Travis)| image:: https://travis-ci.com/computational-metabolomics/django-mogi.svg?branch=master
-   :target: https://travis-ci.com/computational-metabolomics/django-mogi/
-
-.. |Py versions| image:: https://img.shields.io/pypi/pyversions/django-mogi.svg?style=flat&maxAge=3600
-   :target: https://pypi.python.org/pypi/django-mogi/
