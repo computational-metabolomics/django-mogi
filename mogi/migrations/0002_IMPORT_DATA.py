@@ -37,6 +37,14 @@ def forwards_func(apps, schema_editor):
 
     OntologyTerm = apps.get_model("mogi", "OntologyTerm")
 
+    def get_ontology_term(**filters):
+        return OntologyTerm.objects.filter(**filters).first()
+
+    def add_ontologyterm_if_exists(instance, **filters):
+        ontology_term = get_ontology_term(**filters)
+        if ontology_term:
+            instance.ontologyterm.add(ontology_term)
+
     StudySample = apps.get_model("mogi", "StudySample")
 
     Investigation = apps.get_model("mogi", "Investigation")
@@ -92,13 +100,13 @@ def forwards_func(apps, schema_editor):
     # Liquid Phase Extraction types
     lpe_type1 = ExtractionType(type="Apolar", description="Apolar (non-polar)", public=True)
     lpe_type1.save(using=db_alias)
-    lpe_type1.ontologyterm.add(OntologyTerm.objects.filter(name='non-polar')[0])
-    lpe_type1.ontologyterm.add(OntologyTerm.objects.filter(name='Extraction')[0])
+    add_ontologyterm_if_exists(lpe_type1, name='non-polar')
+    add_ontologyterm_if_exists(lpe_type1, name='Extraction')
 
     lpe_type2 = ExtractionType(type="Polar", description="Polar", public=True)
     lpe_type2.save(using=db_alias)
-    lpe_type2.ontologyterm.add(OntologyTerm.objects.filter(name='polar')[0])
-    lpe_type2.ontologyterm.add(OntologyTerm.objects.filter(name='Extraction')[0])
+    add_ontologyterm_if_exists(lpe_type2, name='polar')
+    add_ontologyterm_if_exists(lpe_type2, name='Extraction')
 
     lpe_type3 = ExtractionType(type="Just dilution",
                                description="Some sample types only require dilution",
@@ -142,17 +150,13 @@ def forwards_func(apps, schema_editor):
                                   description="Reversed phase chromatography",
                                   public=True)
     lc_type1.save(using=db_alias)
-    lc_type1.ontologyterm.add(OntologyTerm.objects.filter(
-        name='reversed-phase chromatography')[0]
-                              )
+    add_ontologyterm_if_exists(lc_type1, name='reversed-phase chromatography')
 
     lc_type2 = ChromatographyType(type="HILIC",
                                   description="Hydrophilic interaction chromatography",
                                   public=True)
     lc_type2.save(using=db_alias)
-    lc_type2.ontologyterm.add(OntologyTerm.objects.filter(
-        name='hydrophilic interaction chromatography')[0]
-                              )
+    add_ontologyterm_if_exists(lc_type2, name='hydrophilic interaction chromatography')
 
     # ============================================
     # Measurements techniques (types)
@@ -163,13 +167,13 @@ def forwards_func(apps, schema_editor):
                                    description="Liquid Chromatography mass spectrometry",
                                    public=True)
     m_type1.save(using=db_alias)
-    m_type1.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000524')[0])
+    add_ontologyterm_if_exists(m_type1, short_form='CHMO_0000524')
 
     m_type2 = MeasurementTechnique(type="LC-MSMS",
                                    description="Liquid Chromatography tandem mass spectrometry",
                                    public=True)
     m_type2.save(using=db_alias)
-    m_type2.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000701')[0])
+    add_ontologyterm_if_exists(m_type2, short_form='CHMO_0000701')
 
     m_type3 = MeasurementTechnique(type="DI-MS",
                                    description="Direct infusion mass spectrometry", public=True)
@@ -202,19 +206,19 @@ def forwards_func(apps, schema_editor):
     #############################################################################################
     # print('###Sample Types')
     st1 = SampleType(type='ANIMAL', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='Animal')[0])
+                     ontologyterm=get_ontology_term(name='Animal'))
     st2 = SampleType(type='COMPOUND', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='Compound')[0])
+                     ontologyterm=get_ontology_term(name='Compound'))
     st3 = SampleType(type='BLANK', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
+                     ontologyterm=get_ontology_term(name='blank value'))
     st4 = SampleType(type='MISC', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='Miscellaneous')[0])
+                     ontologyterm=get_ontology_term(name='Miscellaneous'))
     st5 = SampleType(type='EQUIL_BLANK', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='blank value')[0])
+                     ontologyterm=get_ontology_term(name='blank value'))
     st6 = SampleType(type='EQUIL', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='to equilibrate')[0])
+                     ontologyterm=get_ontology_term(name='to equilibrate'))
     st7 = SampleType(type='QC', public=True,
-                     ontologyterm=OntologyTerm.objects.filter(name='Quality Control')[0])
+                     ontologyterm=get_ontology_term(name='Quality Control'))
 
     st1.save(using=db_alias)
     st2.save(using=db_alias)
@@ -438,7 +442,7 @@ def forwards_func(apps, schema_editor):
                                      )
     m_protocol.save(using=db_alias)
     # m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001911')[0])
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000575')[0])
+    add_ontologyterm_if_exists(m_protocol, short_form='CHMO_0000575')
 
     m_protocol = MeasurementProtocol(name="DMA D. magna Elite DI-MS",
                                      description="Direct infusion mass spectrometry using "
@@ -465,7 +469,7 @@ def forwards_func(apps, schema_editor):
                                      )
     m_protocol.save(using=db_alias)
     # m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='MS_1001910')[0])
-    m_protocol.ontologyterm.add(OntologyTerm.objects.filter(short_form='CHMO_0000575')[0])
+    add_ontologyterm_if_exists(m_protocol, short_form='CHMO_0000575')
 
     #######################################
     # Add Study sample (DMA)

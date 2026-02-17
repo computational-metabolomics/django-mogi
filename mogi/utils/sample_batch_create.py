@@ -11,6 +11,10 @@ def check_and_create_model(name, model_to_check, db_alias=''):
     # check if we have the organism
     # if we do return the pk
 
+    qs_by_name = model_to_check.objects.filter(name=name)
+    if qs_by_name:
+        return qs_by_name[0]
+
     qs = model_to_check.objects.filter(ontologyterm__name=name)
 
     if qs:
@@ -21,7 +25,7 @@ def check_and_create_model(name, model_to_check, db_alias=''):
     ont_ids = check_and_create_ontology(name, db_alias=db_alias)
 
     ob = model_to_check(ontologyterm_id=ont_ids[0])
-    ob.name = ob.ontologyterm.name
+    ob.name = name
     ob.public = True
     if db_alias:
         ob.save(using=db_alias)
