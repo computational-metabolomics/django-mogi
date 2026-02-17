@@ -29,12 +29,12 @@ class CompoundListView(ExportMixin, SingleTableMixin, FilterView):
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(CompoundListView, self).get_filterset_kwargs(filterset_class)
         if kwargs["data"] is None:
-            kwargs["data"] = {"smbool": True, "metfragbool": True, "siriusbool":True}
+            kwargs["data"] = {"smbool": 'true', "metfragbool": 'true', "siriusbool": 'true'}
         elif "smbool" not in kwargs["data"]:
             kwargs["data"] = kwargs["data"].copy()
-            kwargs["data"]["smbool"] = True
-            kwargs["data"]["metfragbool"] = True
-            kwargs["data"]["siriusbool"] = True
+            kwargs["data"]["smbool"] = 'true'
+            kwargs["data"]["metfragbool"] = 'true'
+            kwargs["data"]["siriusbool"] = 'true'
 
         return kwargs
 
