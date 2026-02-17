@@ -152,6 +152,7 @@ class MFileListView(GFileListView):
     model = models_isa.MFile
     filterset_class = filter_isa.ISAFileFilter
     template_name = 'mogi/mfile_summary.html'
+    export_formats = []
 
     def get_queryset(self):
         if self.request.user.is_superuser:
