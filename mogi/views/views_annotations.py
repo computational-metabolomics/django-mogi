@@ -45,7 +45,41 @@ class CombinedAnnotationListView(ExportMixin, LoginRequiredMixin, SingleTableMix
 
     def get_table_data(self):
 
-        sql_filter_stmt = filterset_to_sql_stmt(self.filterset)
+        sql_filter_stmt = filterset_to_sql_stmt(self.filterset, {
+            'inchikey': 'ca.inchikey',
+            'inchikey__contains': 'ca.inchikey',
+            'compound_name': 'mc.name',
+            'compound_name__contains': 'mc.name',
+            'sid': 'ca.sid',
+            'sid__gt': 'ca.sid',
+            'sid__lt': 'ca.sid',
+            'grpid': 'ca.grpid',
+            'grpid__gt': 'ca.grpid',
+            'grpid__lt': 'ca.grpid',
+            'sm_score': 'ca.sm_score',
+            'sm_score__gt': 'ca.sm_score',
+            'sm_score__lt': 'ca.sm_score',
+            'metfrag_score': 'ca.metfrag_score',
+            'metfrag_score__gt': 'ca.metfrag_score',
+            'metfrag_score__lt': 'ca.metfrag_score',
+            'sirius_score': 'ca.sirius_score',
+            'sirius_score__gt': 'ca.sirius_score',
+            'sirius_score__lt': 'ca.sirius_score',
+            'ms1_lookup_score': 'ca.ms1_lookup_score',
+            'ms1_lookup_score__gt': 'ca.ms1_lookup_score',
+            'ms1_lookup_score__lt': 'ca.ms1_lookup_score',
+            'biosim_max_score': 'ca.biosim_max_score',
+            'biosim_max_score__gt': 'ca.biosim_max_score',
+            'biosim_max_score__lt': 'ca.biosim_max_score',
+            'wscore': 'ca.wscore',
+            'wscore__gt': 'ca.wscore',
+            'wscore__lt': 'ca.wscore',
+            'rank': 'ca.rank',
+            'rank__gt': 'ca.rank',
+            'rank__lt': 'ca.rank',
+            'adduct_overall': 'ca.adduct_overall',
+            'adduct_overall__contains': 'ca.adduct_overall',
+        })
         self.table_data = get_combined_annotation_table(self.kwargs.get('did'), sql_filter_stmt)
         return super().get_table_data()
 

@@ -76,7 +76,7 @@ def check_table_exists_sqlite(cursor, tablename):
     return True
 
 
-def filterset_to_sql_stmt(filterset):
+def filterset_to_sql_stmt(filterset, field_sql_map=None):
     if not filterset:
         return ''
 
@@ -96,6 +96,11 @@ def filterset_to_sql_stmt(filterset):
             continue
 
         column_name = filter_obj.field_name
+        if field_sql_map:
+            mapped_column_name = field_sql_map.get(filter_name) or field_sql_map.get(column_name)
+            if mapped_column_name:
+                column_name = mapped_column_name
+
         lookup_expr = filter_obj.lookup_expr
         sql_stmt = filter_to_sql_stmt(column_name, value, lookup_expr)
         if sql_stmt:
