@@ -77,13 +77,29 @@ def check_table_exists_sqlite(cursor, tablename):
 
 
 def filterset_to_sql_stmt(filterset):
-    filters = filterset.filters
-    print(filters.keys())
+    if not filterset:
+        return ''
+
+    filterset.form.is_valid()
+
     sql_filters = []
-    for row in filterset.data.items():
-        print(row)
-        if row[0] in filters.keys() and row[1]:
-            sql_filters.append(filter_to_sql_stmt(row[0], row[1]))
+    cleaned_data = getattr(filterset.form, 'cleaned_data', {})
+    for filter_name, value in cleaned_data.items():
+        if value in (None, ''):
+            continue
+
+        filter_obj = filterset.filters.get(filter_name)
+        if not filter_obj:
+            continue
+
+        if getattr(filter_obj, 'method', None):
+            continue
+
+        column_name = filter_obj.field_name
+        lookup_expr = filter_obj.lookup_expr
+        sql_stmt = filter_to_sql_stmt(column_name, value, lookup_expr)
+        if sql_stmt:
+            sql_filters.append(sql_stmt)
 
     if sql_filters:
         return ' AND ' + ' AND '.join(sql_filters)
@@ -91,17 +107,21 @@ def filterset_to_sql_stmt(filterset):
         return ''
 
 
-
-def filter_to_sql_stmt(d_filter, val):
-    colnm, comp = d_filter.split('__')
-
-    if comp == 'gt':
-        comp_sql_compat = '>'
-        return '{} {} {}'.format(colnm, comp_sql_compat, val)
-    elif comp == 'lt':
-        comp_sql_compat = '<'
-        return '{} {} {}'.format(colnm, comp_sql_compat, val)
-    elif comp == 'contains':
-        comp_sql_compat = 'LIKE'
-        return '{} {} "%{}%"'.format(colnm, comp_sql_compat, val)
+def filter_to_sql_stmt(column_name, value, lookup_expr):
+    if lookup_expr == 'gt':
+        return '{} > {}'.format(column_name, value)
+    elif lookup_expr == 'lt':
+        return '{} < {}'.format(column_name, value)
+    elif lookup_expr == 'contains':
+        escaped_value = str(value).replace('"', '""').replace("'", "''")
+        return "{} LIKE '%{}%'".format(column_name, escaped_value)
+    elif lookup_expr == 'exact':
+        if isinstance(value, bool):
+            return '{} = {}'.format(column_name, 1 if value else 0)
+        elif isinstance(value, (int, float)):
+            return '{} = {}'.format(column_name, value)
+        else:
+            escaped_value = str(value).replace('"', '""').replace("'", "''")
+            return "{} = '{}'".format(column_name, escaped_value)
+    return ''
 
