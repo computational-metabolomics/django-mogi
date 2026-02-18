@@ -34,5 +34,5 @@ class CompoundTable(ColumnShiftTable):
                   'assay', 'extraction', 'spe', 'spe_frac',
                   'chromatography', 'measurement', 'polarity',
                   'lcmsdimsbool', 'gcmsbool', 'smbool', 'metfragbool',
-                  'siriusbool', 'mzcloudbool', 'galaxysmbool', 'gnpssmbool',
+                  'siriusbool', 'mzcloudsmbool', 'galaxysmbool', 'gnpssmbool',
                   'msi_level')
