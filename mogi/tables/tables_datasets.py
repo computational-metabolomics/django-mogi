@@ -14,5 +14,6 @@ class ResultsDataTable(ColumnShiftTable):
 
         model = models_datasets.Dataset
         # add class="paleblue" to <table> tag
+        exclude = ('sqlite', 'tsv')
 
         attrs = {"class": TABLE_CLASS}
