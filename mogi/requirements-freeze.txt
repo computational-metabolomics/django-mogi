@@ -46,7 +46,7 @@ easydev==0.9.38
 entrypoints==0.3
 et-xmlfile==1.0.1
 fs==2.2.1
-future==0.18.2
+future==0.18.3
 gevent==1.4.0
 green==3.0.0
 greenlet==0.4.15
